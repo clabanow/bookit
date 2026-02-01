@@ -313,10 +313,10 @@ export default function PlayPage({ params }: PlayPageProps) {
       <div
         role="alert"
         aria-live="assertive"
-        className="flex min-h-screen flex-col items-center justify-center bg-red-50 p-8"
+        className="flex min-h-screen flex-col items-center justify-center bg-red-50 p-4 md:p-8"
       >
-        <h1 className="mb-4 text-2xl font-bold text-red-600">Error</h1>
-        <p className="text-red-500">{error}</p>
+        <h1 className="mb-4 text-xl md:text-2xl font-bold text-red-600">Error</h1>
+        <p className="text-red-500 text-center">{error}</p>
       </div>
     )
   }
@@ -324,11 +324,11 @@ export default function PlayPage({ params }: PlayPageProps) {
   // LOBBY phase - waiting for game to start
   if (phase === 'LOBBY') {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-purple-600 to-purple-800 p-8 text-white">
-        <div className="mb-8 text-6xl">🎮</div>
-        <h1 className="mb-4 text-2xl font-bold">You&apos;re in!</h1>
-        <p className="text-purple-200">Waiting for host to start the game...</p>
-        <div className="mt-8 animate-pulse text-lg">Get ready!</div>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-purple-600 to-purple-800 p-4 md:p-8 text-white">
+        <div className="mb-6 md:mb-8 text-5xl md:text-6xl">🎮</div>
+        <h1 className="mb-4 text-xl md:text-2xl font-bold">You&apos;re in!</h1>
+        <p className="text-purple-200 text-center">Waiting for host to start the game...</p>
+        <div className="mt-6 md:mt-8 animate-pulse text-base md:text-lg">Get ready!</div>
       </div>
     )
   }
@@ -340,12 +340,12 @@ export default function PlayPage({ params }: PlayPageProps) {
         role="timer"
         aria-live="polite"
         aria-label={`Countdown: ${countdown} seconds`}
-        className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-600 to-blue-800 p-8 text-white"
+        className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-600 to-blue-800 p-4 md:p-8 text-white"
       >
-        <div className="text-9xl font-bold" aria-hidden="true">
+        <div className="text-7xl sm:text-8xl md:text-9xl font-bold" aria-hidden="true">
           {countdown}
         </div>
-        <p className="mt-8 text-xl">Get ready!</p>
+        <p className="mt-6 md:mt-8 text-lg md:text-xl">Get ready!</p>
       </div>
     )
   }
@@ -355,15 +355,15 @@ export default function PlayPage({ params }: PlayPageProps) {
     // Spelling question
     if (question.questionType === 'SPELLING') {
       return (
-        <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-slate-900 to-slate-800 p-8">
+        <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-slate-900 to-slate-800 p-4 md:p-8">
           <div className="w-full max-w-md">
             {/* Question counter */}
-            <div className="text-center mb-4 text-slate-400">
+            <div className="text-center mb-4 text-sm md:text-base text-slate-400">
               Question {question.questionIndex + 1} of {question.totalQuestions}
             </div>
 
             {/* Audio player */}
-            <div className="mb-8">
+            <div className="mb-6 md:mb-8">
               <SpellingAudio
                 word={question.word || ''}
                 hint={question.hint || undefined}
@@ -374,9 +374,9 @@ export default function PlayPage({ params }: PlayPageProps) {
             {/* Input or waiting state */}
             {hasAnswered ? (
               <div className="text-center">
-                <div className="text-4xl mb-4">✓</div>
-                <p className="text-green-400 text-xl">Answer submitted!</p>
-                <p className="text-slate-400 mt-2">You spelled: {spellingAnswer}</p>
+                <div className="text-3xl md:text-4xl mb-4">✓</div>
+                <p className="text-green-400 text-lg md:text-xl">Answer submitted!</p>
+                <p className="text-slate-400 mt-2 text-sm md:text-base">You spelled: {spellingAnswer}</p>
               </div>
             ) : (
               <SpellingInput
@@ -409,26 +409,26 @@ export default function PlayPage({ params }: PlayPageProps) {
     const isSpelling = reveal.questionType === 'SPELLING'
 
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-8">
+      <div className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8">
         <div
-          className={`mb-8 text-9xl ${myResult?.isCorrect ? 'text-green-500' : 'text-red-500'}`}
+          className={`mb-6 md:mb-8 text-6xl sm:text-7xl md:text-8xl ${myResult?.isCorrect ? 'text-green-500' : 'text-red-500'}`}
         >
           {myResult?.isCorrect ? '✓' : '✗'}
         </div>
-        <h1 className="mb-4 text-3xl font-bold">
+        <h1 className="mb-4 text-2xl md:text-3xl font-bold">
           {myResult?.isCorrect ? 'Correct!' : 'Wrong!'}
         </h1>
         {myResult && (
-          <p className="text-2xl text-gray-600">+{myResult.points} points</p>
+          <p className="text-xl md:text-2xl text-gray-600">+{myResult.points} points</p>
         )}
-        <p className="mt-4 text-gray-500">
+        <p className="mt-4 text-sm md:text-base text-gray-500 text-center px-4">
           Correct answer:{' '}
           {isSpelling
             ? reveal.correctAnswer
             : question?.options?.[reveal.correctIndex ?? 0]}
         </p>
         {isSpelling && spellingAnswer && !myResult?.isCorrect && (
-          <p className="mt-2 text-gray-400 text-sm">
+          <p className="mt-2 text-gray-400 text-xs md:text-sm">
             You spelled: {spellingAnswer}
           </p>
         )}
@@ -439,27 +439,27 @@ export default function PlayPage({ params }: PlayPageProps) {
   // LEADERBOARD phase - show standings
   if (phase === 'LEADERBOARD') {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-purple-600 to-purple-800 p-8 text-white">
-        <h1 className="mb-8 text-center text-3xl font-bold">Leaderboard</h1>
-        <div className="mx-auto max-w-md space-y-3">
+      <div className="min-h-screen bg-gradient-to-b from-purple-600 to-purple-800 p-4 md:p-8 text-white">
+        <h1 className="mb-6 md:mb-8 text-center text-2xl md:text-3xl font-bold">Leaderboard</h1>
+        <div className="mx-auto max-w-md space-y-2 md:space-y-3">
           {leaderboard.map((player, index) => (
             <div
               key={player.playerId}
-              className={`flex items-center justify-between rounded-lg p-4 ${
+              className={`flex items-center justify-between rounded-lg p-3 md:p-4 ${
                 player.playerId === playerId
                   ? 'bg-white text-purple-900'
                   : 'bg-purple-700'
               }`}
             >
-              <div className="flex items-center gap-3">
-                <span className="text-2xl font-bold">#{index + 1}</span>
-                <span className="font-medium">{player.nickname}</span>
+              <div className="flex items-center gap-2 md:gap-3">
+                <span className="text-xl md:text-2xl font-bold">#{index + 1}</span>
+                <span className="font-medium text-sm md:text-base">{player.nickname}</span>
               </div>
-              <span className="text-xl font-bold">{player.score}</span>
+              <span className="text-lg md:text-xl font-bold">{player.score}</span>
             </div>
           ))}
         </div>
-        <p className="mt-8 text-center text-purple-200">
+        <p className="mt-6 md:mt-8 text-center text-purple-200 text-sm md:text-base">
           Waiting for next question...
         </p>
       </div>
@@ -473,42 +473,42 @@ export default function PlayPage({ params }: PlayPageProps) {
     const isWinner = myRank === 1
 
     return (
-      <div className="min-h-screen bg-gradient-to-b from-yellow-500 to-orange-500 p-8 text-white">
-        <div className="mb-8 text-center">
-          <div className="text-8xl">{isWinner ? '🏆' : '🎉'}</div>
-          <h1 className="mt-4 text-4xl font-bold">Game Over!</h1>
+      <div className="min-h-screen bg-gradient-to-b from-yellow-500 to-orange-500 p-4 md:p-8 text-white">
+        <div className="mb-6 md:mb-8 text-center">
+          <div className="text-6xl md:text-8xl">{isWinner ? '🏆' : '🎉'}</div>
+          <h1 className="mt-4 text-3xl md:text-4xl font-bold">Game Over!</h1>
         </div>
 
         {isWinner ? (
-          <p className="mb-8 text-center text-2xl">You won!</p>
+          <p className="mb-6 md:mb-8 text-center text-xl md:text-2xl">You won!</p>
         ) : (
-          <p className="mb-8 text-center text-2xl">
+          <p className="mb-6 md:mb-8 text-center text-lg md:text-2xl">
             {winner?.nickname} wins with {winner?.score} points!
           </p>
         )}
 
-        <div className="mx-auto max-w-md space-y-3">
+        <div className="mx-auto max-w-md space-y-2 md:space-y-3">
           {leaderboard.slice(0, 5).map((player, index) => (
             <div
               key={player.playerId}
-              className={`flex items-center justify-between rounded-lg p-4 ${
+              className={`flex items-center justify-between rounded-lg p-3 md:p-4 ${
                 player.playerId === playerId
                   ? 'bg-white text-orange-900'
                   : 'bg-orange-400'
               }`}
             >
-              <div className="flex items-center gap-3">
-                <span className="text-2xl font-bold">
+              <div className="flex items-center gap-2 md:gap-3">
+                <span className="text-xl md:text-2xl font-bold">
                   {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
                 </span>
-                <span className="font-medium">{player.nickname}</span>
+                <span className="font-medium text-sm md:text-base">{player.nickname}</span>
               </div>
-              <span className="text-xl font-bold">{player.score}</span>
+              <span className="text-lg md:text-xl font-bold">{player.score}</span>
             </div>
           ))}
         </div>
 
-        <div className="mt-8 text-center">
+        <div className="mt-6 md:mt-8 text-center">
           <Button
             onClick={() => (window.location.href = '/join')}
             className="bg-white text-orange-600 hover:bg-orange-100"

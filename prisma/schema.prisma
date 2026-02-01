@@ -32,7 +32,8 @@ enum ApprovalStatus {
 model User {
   id           String         @id @default(cuid())
   email        String         @unique
-  passwordHash String
+  passwordHash String?        // Nullable for OAuth-only users
+  googleId     String?        @unique // Google's unique user ID for OAuth
   role         Role           @default(USER)
   status       ApprovalStatus @default(PENDING)
   createdAt    DateTime       @default(now())

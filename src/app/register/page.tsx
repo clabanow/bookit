@@ -4,6 +4,7 @@
  * Registration Page
  *
  * New users create an account with email and password.
+ * Also supports Google OAuth sign-up.
  * Accounts start in PENDING status until approved by admin.
  */
 
@@ -13,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { GoogleIcon } from '@/components/icons/GoogleIcon'
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('')
@@ -149,6 +151,27 @@ export default function RegisterPage() {
 
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Creating account...' : 'Create Account'}
+            </Button>
+
+            {/* Divider */}
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-600"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-card px-2 text-slate-400">or</span>
+              </div>
+            </div>
+
+            {/* Google Sign-Up */}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => (window.location.href = '/api/auth/google')}
+            >
+              <GoogleIcon className="mr-2 h-5 w-5" />
+              Sign up with Google
             </Button>
 
             <p className="text-center text-sm text-slate-400">

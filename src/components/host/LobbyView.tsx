@@ -43,27 +43,27 @@ export function LobbyView({
   const canStart = connectedPlayers.length > 0 && !isStarting
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-600 to-blue-800 p-8 text-white">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-600 to-blue-800 p-4 md:p-8 text-white">
       {/* Question Set Info */}
       {questionSetTitle && (
-        <div className="mb-6 text-center">
-          <p className="text-lg opacity-80">Playing:</p>
-          <p className="text-2xl font-semibold">{questionSetTitle}</p>
+        <div className="mb-4 md:mb-6 text-center">
+          <p className="text-base md:text-lg opacity-80">Playing:</p>
+          <p className="text-xl md:text-2xl font-semibold">{questionSetTitle}</p>
         </div>
       )}
 
       {/* Room Code Section */}
-      <div className="mb-12 text-center">
-        <p className="mb-2 text-xl opacity-80">Join at bookit.app with code:</p>
-        <div className="rounded-2xl bg-white px-8 py-6 shadow-2xl">
-          <span className="font-mono text-6xl font-bold tracking-widest text-blue-600">
+      <div className="mb-8 md:mb-12 text-center">
+        <p className="mb-2 text-base md:text-xl opacity-80">Join at bookit.app with code:</p>
+        <div className="rounded-2xl bg-white px-4 py-4 md:px-8 md:py-6 shadow-2xl">
+          <span className="font-mono text-4xl sm:text-5xl md:text-6xl font-bold tracking-widest text-blue-600">
             {roomCode}
           </span>
         </div>
       </div>
 
       {/* Player Roster */}
-      <div className="mb-8 w-full max-w-md">
+      <div className="mb-6 md:mb-8 w-full max-w-md">
         <PlayerRoster players={players} onKickPlayer={onKickPlayer} />
       </div>
 
@@ -72,7 +72,7 @@ export function LobbyView({
         size="lg"
         onClick={onStartGame}
         disabled={!canStart}
-        className="bg-green-500 px-12 py-6 text-xl font-bold hover:bg-green-600 disabled:opacity-50"
+        className="bg-green-500 px-8 py-4 md:px-12 md:py-6 text-lg md:text-xl font-bold hover:bg-green-600 disabled:opacity-50"
       >
         {isStarting ? 'Starting...' : 'Start Game'}
       </Button>

@@ -4,16 +4,18 @@
  * Login Page
  *
  * Users enter their email and password to sign in.
+ * Also supports Google OAuth sign-in.
  * Redirects to home or shows pending/rejected status messages.
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { GoogleIcon } from '@/components/icons/GoogleIcon'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -24,6 +26,29 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [isPending, setIsPending] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  // Handle OAuth error/pending parameters from callback
+  useEffect(() => {
+    const oauthError = searchParams.get('error')
+    const pending = searchParams.get('pending')
+
+    if (oauthError) {
+      const errorMessages: Record<string, string> = {
+        google_denied: 'Google sign-in was cancelled',
+        invalid_callback: 'Invalid OAuth callback',
+        invalid_state: 'Security check failed. Please try again.',
+        email_not_verified: 'Your Google email is not verified',
+        account_rejected: 'Your account has been rejected',
+        oauth_failed: 'Google sign-in failed. Please try again.',
+      }
+      setError(errorMessages[oauthError] || 'Sign-in failed')
+    }
+
+    if (pending === 'true') {
+      setIsPending(true)
+      setError('Your account is pending approval. An admin will review your registration.')
+    }
+  }, [searchParams])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -110,6 +135,27 @@ export default function LoginPage() {
 
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Signing in...' : 'Sign In'}
+            </Button>
+
+            {/* Divider */}
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-600"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-card px-2 text-slate-400">or</span>
+              </div>
+            </div>
+
+            {/* Google Sign-In */}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => (window.location.href = '/api/auth/google')}
+            >
+              <GoogleIcon className="mr-2 h-5 w-5" />
+              Sign in with Google
             </Button>
 
             <p className="text-center text-sm text-slate-400">

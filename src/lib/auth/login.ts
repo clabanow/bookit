@@ -40,6 +40,15 @@ export async function loginUser(input: LoginInput): Promise<LoginResult> {
     return { success: false, error: 'Invalid email or password' }
   }
 
+  // Check if user has a password (OAuth-only users won't)
+  if (!user.passwordHash) {
+    // User signed up with Google, has no password
+    return {
+      success: false,
+      error: 'This account uses Google sign-in. Please use "Sign in with Google".',
+    }
+  }
+
   // Verify password
   const isValid = await verifyPassword(input.password, user.passwordHash)
   if (!isValid) {

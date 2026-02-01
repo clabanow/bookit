@@ -134,7 +134,7 @@ export default function JoinPage() {
   // Loading state while checking auth
   if (state === 'auth_check') {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white p-8">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4 md:p-8">
         <p className="text-gray-500">Checking authentication...</p>
       </div>
     )
@@ -143,8 +143,8 @@ export default function JoinPage() {
   // Error state
   if (state === 'error' && !roomCode) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white p-8">
-        <div className="w-full max-w-sm rounded-lg bg-red-100 px-6 py-4 text-center text-red-700 mb-4">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4 md:p-8">
+        <div className="w-full max-w-sm rounded-lg bg-red-100 px-4 md:px-6 py-4 text-center text-red-700 mb-4">
           <p>{error}</p>
         </div>
         <Button onClick={() => router.push('/')}>Go Home</Button>
@@ -155,10 +155,10 @@ export default function JoinPage() {
   // Player selector screen
   if (state === 'select_player') {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-slate-900 to-slate-800 p-8">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-slate-900 to-slate-800 p-4 md:p-8">
         <div className="mb-4 text-center">
-          <p className="text-slate-400">Joining room</p>
-          <p className="text-2xl font-mono font-bold text-white tracking-widest">
+          <p className="text-slate-400 text-sm md:text-base">Joining room</p>
+          <p className="text-xl md:text-2xl font-mono font-bold text-white tracking-widest">
             {roomCode.toUpperCase()}
           </p>
         </div>
@@ -173,8 +173,8 @@ export default function JoinPage() {
   // Joining state
   if (state === 'joining') {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white p-8">
-        <h1 className="mb-4 text-4xl font-bold text-blue-600">Joining...</h1>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4 md:p-8">
+        <h1 className="mb-4 text-3xl md:text-4xl font-bold text-blue-600">Joining...</h1>
         <p className="text-gray-600">Connecting as {selectedPlayer?.nickname}</p>
       </div>
     )
@@ -182,20 +182,20 @@ export default function JoinPage() {
 
   // Room code entry screen (default)
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white p-8">
-      <h1 className="mb-8 text-4xl font-bold text-blue-600">Join a Game</h1>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4 md:p-8">
+      <h1 className="mb-6 md:mb-8 text-3xl md:text-4xl font-bold text-blue-600">Join a Game</h1>
 
       {state === 'error' && (
         <div
           role="alert"
           aria-live="polite"
-          className="mb-6 w-full max-w-sm rounded-lg bg-red-100 px-6 py-4 text-center text-red-700"
+          className="mb-4 md:mb-6 w-full max-w-sm rounded-lg bg-red-100 px-4 md:px-6 py-4 text-center text-red-700"
         >
           <p>{error}</p>
         </div>
       )}
 
-      <form onSubmit={handleRoomCodeSubmit} className="flex w-full max-w-sm flex-col gap-4">
+      <form onSubmit={handleRoomCodeSubmit} className="flex w-full max-w-sm flex-col gap-4 px-4 md:px-0">
         <div>
           <label htmlFor="roomCode" className="mb-1 block text-sm font-medium text-gray-700">
             Room Code
@@ -206,7 +206,7 @@ export default function JoinPage() {
             value={roomCode}
             onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
             placeholder="ABC123"
-            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-center font-mono text-2xl uppercase tracking-widest focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-center font-mono text-xl md:text-2xl uppercase tracking-widest focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
             maxLength={6}
             autoComplete="off"
             autoFocus
@@ -218,7 +218,7 @@ export default function JoinPage() {
         </Button>
       </form>
 
-      <p className="mt-8 text-sm text-gray-500">
+      <p className="mt-6 md:mt-8 text-sm text-gray-500 text-center">
         Ask your host for the 6-character room code
       </p>
     </div>

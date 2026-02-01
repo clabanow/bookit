@@ -187,11 +187,11 @@ export default function HostPage() {
 
   // Render the initial setup screen
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white p-8">
-      <h1 className="mb-8 text-4xl font-bold text-blue-600">Host a Game</h1>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4 md:p-8">
+      <h1 className="mb-6 md:mb-8 text-3xl md:text-4xl font-bold text-blue-600">Host a Game</h1>
 
       {state === 'error' && (
-        <div className="mb-6 rounded-lg bg-red-100 px-6 py-4 text-red-700">
+        <div className="mb-4 md:mb-6 rounded-lg bg-red-100 px-4 md:px-6 py-4 text-red-700">
           <p className="font-medium">Error: {error}</p>
           <button
             onClick={() => setState('initial')}
@@ -202,7 +202,7 @@ export default function HostPage() {
         </div>
       )}
 
-      <div className="w-full max-w-md space-y-6">
+      <div className="w-full max-w-md space-y-4 md:space-y-6 px-4 md:px-0">
         {/* Question set selector */}
         <SetSelector onSelect={handleSelectSet} selectedId={selectedSetId ?? undefined} />
 

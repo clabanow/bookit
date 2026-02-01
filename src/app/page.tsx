@@ -4,9 +4,9 @@ import Link from 'next/link';
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white p-8">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4 md:p-8">
       {/* Auth links in top-right */}
-      <nav className="absolute top-4 right-4 flex gap-4">
+      <nav className="absolute top-4 right-4 flex gap-3 md:gap-4">
         <Link href="/login" className="text-sm text-gray-600 hover:text-blue-600">
           Sign In
         </Link>
@@ -16,8 +16,8 @@ export default function Home() {
       </nav>
 
       <main className="flex flex-col items-center text-center">
-        <h1 className="mb-4 text-6xl font-bold text-blue-600">Bookit</h1>
-        <p className="mb-12 max-w-md text-xl text-gray-600">
+        <h1 className="mb-4 text-4xl sm:text-5xl md:text-6xl font-bold text-blue-600">Bookit</h1>
+        <p className="mb-8 md:mb-12 max-w-md text-lg md:text-xl text-gray-600 px-4">
           Live classroom quiz games that make learning fun and engaging.
         </p>
         <div className="flex flex-col gap-4 sm:flex-row">

@@ -73,13 +73,13 @@ export function QuestionView({
       </div>
 
       {/* Time remaining - hidden from screen readers since progressbar handles it */}
-      <div className="mb-4 text-center text-2xl font-bold" aria-hidden="true">
+      <div className="mb-4 text-center text-xl md:text-2xl font-bold" aria-hidden="true">
         {Math.ceil(timeLeft)}s
       </div>
 
       {/* Question */}
-      <div className="mb-8 rounded-lg bg-white p-6 text-center">
-        <h2 className="text-xl font-bold text-gray-900">{prompt}</h2>
+      <div className="mb-6 md:mb-8 rounded-lg bg-white p-4 md:p-6 text-center">
+        <h2 className="text-lg md:text-xl font-bold text-gray-900">{prompt}</h2>
       </div>
 
       {/* Answer options */}
@@ -90,18 +90,18 @@ export function QuestionView({
           className="flex flex-1 items-center justify-center"
         >
           <div className="text-center">
-            <div className="mb-4 text-6xl" aria-hidden="true">
+            <div className="mb-4 text-5xl md:text-6xl" aria-hidden="true">
               ✓
             </div>
-            <p className="text-xl">Answer submitted!</p>
-            <p className="text-purple-300">Waiting for time to run out...</p>
+            <p className="text-lg md:text-xl">Answer submitted!</p>
+            <p className="text-purple-300 text-sm md:text-base">Waiting for time to run out...</p>
           </div>
         </div>
       ) : (
         <div
           role="group"
           aria-label="Answer options"
-          className="grid flex-1 grid-cols-2 gap-3"
+          className="grid flex-1 grid-cols-2 gap-2 md:gap-3"
         >
           {options.map((option, index) => (
             <Button
@@ -109,7 +109,7 @@ export function QuestionView({
               onClick={() => onAnswer(index)}
               disabled={hasAnswered}
               aria-label={`Answer ${index + 1}: ${option}`}
-              className={`h-full min-h-24 text-lg font-bold text-white ${
+              className={`h-full min-h-20 md:min-h-24 text-base md:text-lg font-bold text-white ${
                 selectedAnswer === index
                   ? 'ring-4 ring-white'
                   : OPTION_COLORS[index]

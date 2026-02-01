@@ -7,11 +7,18 @@
 
 import { prisma } from '@/lib/db'
 import { hashPassword } from './password'
+import type { User } from '@prisma/client'
 
 // Registration input
 export interface RegisterInput {
   email: string
   password: string
+}
+
+// Google OAuth registration input
+export interface GoogleRegisterInput {
+  email: string
+  googleId: string
 }
 
 // Registration result
@@ -100,4 +107,56 @@ export async function registerUser(input: RegisterInput): Promise<RegisterResult
     console.error('Registration error:', error)
     return { success: false, error: 'Registration failed. Please try again.' }
   }
+}
+
+/**
+ * Find or create a user via Google OAuth
+ *
+ * This handles three scenarios:
+ * 1. User exists with this googleId - return them
+ * 2. User exists with this email (password user) - link Google account
+ * 3. New user - create with PENDING status
+ *
+ * Returns the user so we can create a session.
+ */
+export async function findOrCreateGoogleUser(
+  input: GoogleRegisterInput
+): Promise<{ user: User; isNew: boolean }> {
+  const email = input.email.toLowerCase().trim()
+
+  // First, check if user exists by googleId
+  const existingByGoogle = await prisma.user.findUnique({
+    where: { googleId: input.googleId },
+  })
+
+  if (existingByGoogle) {
+    return { user: existingByGoogle, isNew: false }
+  }
+
+  // Check if user exists by email (might be password-only user)
+  const existingByEmail = await prisma.user.findUnique({
+    where: { email },
+  })
+
+  if (existingByEmail) {
+    // Link Google account to existing user
+    const updated = await prisma.user.update({
+      where: { id: existingByEmail.id },
+      data: { googleId: input.googleId },
+    })
+    return { user: updated, isNew: false }
+  }
+
+  // Create new user with Google auth
+  const newUser = await prisma.user.create({
+    data: {
+      email,
+      googleId: input.googleId,
+      // passwordHash is null for OAuth-only users
+      // status defaults to PENDING
+      // role defaults to USER
+    },
+  })
+
+  return { user: newUser, isNew: true }
 }
