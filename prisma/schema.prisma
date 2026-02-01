@@ -1,0 +1,37 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+model QuestionSet {
+  id        String     @id @default(cuid())
+  title     String
+  ownerId   String?    // For future auth
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  questions Question[]
+
+  @@index([ownerId])
+}
+
+model Question {
+  id           String      @id @default(cuid())
+  setId        String
+  prompt       String
+  options      String[]    // Array of 4 options
+  correctIndex Int         // 0-3
+  timeLimitSec Int         @default(20)
+  order        Int         @default(0)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  questionSet  QuestionSet @relation(fields: [setId], references: [id], onDelete: Cascade)
+
+  @@index([setId])
+}
