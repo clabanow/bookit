@@ -87,7 +87,8 @@ function parseConfig(): AppConfig {
 
     // Server
     port: parseInt(process.env.PORT || '3000', 10),
-    hostname: process.env.HOSTNAME || 'localhost',
+    // In production, bind to 0.0.0.0 to accept external connections
+    hostname: process.env.HOSTNAME || (isProduction ? '0.0.0.0' : 'localhost'),
 
     // Database - required in production, optional in development
     databaseUrl: process.env.DATABASE_URL,
