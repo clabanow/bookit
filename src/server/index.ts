@@ -41,14 +41,29 @@ async function start() {
 
     // Create a raw HTTP server
     // This is what both Next.js and Socket.IO will attach to
-    const httpServer = createServer((req, res) => {
+    const httpServer = createServer(async (req, res) => {
       // Log incoming requests in production for debugging
       if (!dev) {
         console.log(`📨 ${req.method} ${req.url}`)
       }
-      // Let Next.js handle all HTTP requests
-      // Socket.IO intercepts WebSocket upgrade requests before they reach here
-      nextHandler(req, res)
+
+      // Simple health check endpoint (bypasses Next.js)
+      if (req.url === '/health') {
+        res.statusCode = 200
+        res.setHeader('Content-Type', 'application/json')
+        res.end(JSON.stringify({ status: 'ok', timestamp: new Date().toISOString() }))
+        return
+      }
+
+      try {
+        // Let Next.js handle all HTTP requests
+        // Socket.IO intercepts WebSocket upgrade requests before they reach here
+        await nextHandler(req, res)
+      } catch (err) {
+        console.error('❌ Error handling request:', err)
+        res.statusCode = 500
+        res.end('Internal Server Error')
+      }
     })
 
     // Attach Socket.IO to the HTTP server
