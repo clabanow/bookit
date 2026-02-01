@@ -22,10 +22,10 @@ import { createSocketServer } from './socket.js'
 import { config, logConfig, validateProductionConfig } from '../lib/config.js'
 
 // Use centralized configuration
-const { isDevelopment: dev, hostname, port } = config
+const { isDevelopment: dev, port } = config
 
-// Initialize Next.js
-const app = next({ dev, hostname, port })
+// Initialize Next.js (don't pass hostname - let it use defaults)
+const app = next({ dev })
 const nextHandler = app.getRequestHandler()
 
 async function start() {
@@ -73,13 +73,13 @@ async function start() {
     // (Alternative: use a module-level export)
     ;(global as Record<string, unknown>).__socketIO = io
 
-    // Start listening
-    httpServer.listen(port, () => {
+    // Start listening on all interfaces
+    httpServer.listen(port, '0.0.0.0', () => {
       console.log('')
       console.log('  ╔══════════════════════════════════════════════╗')
       console.log('  ║           🎮 Bookit Game Server              ║')
       console.log('  ╠══════════════════════════════════════════════╣')
-      console.log(`  ║  Local:    http://${hostname}:${port}           ║`)
+      console.log(`  ║  Port:     ${port}                              ║`)
       console.log(`  ║  Mode:     ${dev ? 'Development' : 'Production'}                  ║`)
       console.log('  ║  Socket:   Ready                             ║')
       console.log('  ╚══════════════════════════════════════════════╝')
