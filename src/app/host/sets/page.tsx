@@ -5,6 +5,10 @@
  * This is a server component that fetches data on the server.
  */
 
+// Force dynamic rendering - don't pre-render at build time
+// This is needed because we access the database, which isn't available during build
+export const dynamic = 'force-dynamic'
+
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { QuestionSetList } from '@/components/host/QuestionSetList'
