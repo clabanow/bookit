@@ -4,7 +4,7 @@
  * The main game view for players. Handles all game phases:
  * - LOBBY: Waiting for host to start
  * - COUNTDOWN: 3-2-1 before question
- * - QUESTION: Answering the question
+ * - QUESTION: Answering the question (multiple choice OR spelling)
  * - REVEAL: Showing if answer was correct
  * - LEADERBOARD: Showing standings
  * - END: Game over, final results
@@ -17,13 +17,23 @@
 import { useState, useEffect, useCallback, use } from 'react'
 import { getSocket, disconnectSocket } from '@/lib/realtime/client'
 import { QuestionView } from '@/components/play/QuestionView'
+import { SpellingAudio } from '@/components/play/SpellingAudio'
+import { SpellingInput } from '@/components/play/SpellingInput'
 import { Button } from '@/components/ui/button'
 
 type GamePhase = 'LOBBY' | 'COUNTDOWN' | 'QUESTION' | 'REVEAL' | 'LEADERBOARD' | 'END'
+type QuestionType = 'MULTIPLE_CHOICE' | 'SPELLING'
 
 interface QuestionData {
-  prompt: string
-  options: string[]
+  questionType: QuestionType
+  // Multiple choice fields
+  prompt?: string
+  options?: string[]
+  // Spelling fields
+  word?: string
+  wordLength?: number
+  hint?: string
+  // Common fields
   timeLimitSec: number
   startedAt: number
   questionIndex: number
@@ -31,11 +41,14 @@ interface QuestionData {
 }
 
 interface RevealData {
-  correctIndex: number
+  questionType: QuestionType
+  correctIndex?: number
+  correctAnswer?: string
   results: Array<{
     playerId: string
     nickname: string
     answerIndex: number | null
+    spellingAnswer: string | null
     isCorrect: boolean
     points: number
     totalScore: number
@@ -65,8 +78,27 @@ export default function PlayPage({ params }: PlayPageProps) {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [hasAnswered, setHasAnswered] = useState(false)
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
+  const [spellingAnswer, setSpellingAnswer] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [myResult, setMyResult] = useState<{ isCorrect: boolean; points: number } | null>(null)
+  const [timeLeft, setTimeLeft] = useState<number>(0)
+
+  // Timer for questions
+  useEffect(() => {
+    if (phase !== 'QUESTION' || !question || hasAnswered) return
+
+    const endTime = question.startedAt + question.timeLimitSec * 1000
+
+    const updateTimer = () => {
+      const remaining = Math.max(0, Math.ceil((endTime - Date.now()) / 1000))
+      setTimeLeft(remaining)
+    }
+
+    updateTimer()
+    const interval = setInterval(updateTimer, 100)
+
+    return () => clearInterval(interval)
+  }, [phase, question, hasAnswered])
 
   // Connect to socket and set up event listeners
   useEffect(() => {
@@ -95,13 +127,18 @@ export default function PlayPage({ params }: PlayPageProps) {
       setPhase(data.phase as GamePhase)
 
       if (data.currentQuestion) {
+        const q = data.currentQuestion as Record<string, unknown>
         setQuestion({
-          prompt: data.currentQuestion.prompt,
-          options: data.currentQuestion.options,
-          timeLimitSec: data.currentQuestion.timeLimitSec,
-          startedAt: Date.now() - ((data.currentQuestion.timeLimitSec - (data.timeRemaining ?? 0)) * 1000),
-          questionIndex: data.currentQuestion.questionIndex,
-          totalQuestions: data.currentQuestion.totalQuestions,
+          questionType: (q.questionType as QuestionType) || 'MULTIPLE_CHOICE',
+          prompt: q.prompt as string | undefined,
+          options: q.options as string[] | undefined,
+          word: q.word as string | undefined,
+          wordLength: q.wordLength as number | undefined,
+          hint: q.hint as string | undefined,
+          timeLimitSec: q.timeLimitSec as number,
+          startedAt: Date.now() - (((q.timeLimitSec as number) - (data.timeRemaining ?? 0)) * 1000),
+          questionIndex: q.questionIndex as number,
+          totalQuestions: q.totalQuestions as number,
         })
       }
 
@@ -133,40 +170,54 @@ export default function PlayPage({ params }: PlayPageProps) {
     // New question
     socket.on('game:question', (data) => {
       console.log('Question:', data)
+      const d = data as Record<string, unknown>
       setPhase('QUESTION')
       setQuestion({
-        prompt: data.prompt,
-        options: data.options,
-        timeLimitSec: data.timeLimitSec,
-        startedAt: data.startedAt, // Server sends startedAt
-        questionIndex: data.questionIndex,
-        totalQuestions: data.totalQuestions,
+        questionType: (d.questionType as QuestionType) || 'MULTIPLE_CHOICE',
+        prompt: d.prompt as string | undefined,
+        options: d.options as string[] | undefined,
+        word: d.word as string | undefined,
+        wordLength: d.wordLength as number | undefined,
+        hint: d.hint as string | undefined,
+        timeLimitSec: d.timeLimitSec as number,
+        startedAt: d.startedAt as number,
+        questionIndex: d.questionIndex as number,
+        totalQuestions: d.totalQuestions as number,
       })
       setHasAnswered(false)
       setSelectedAnswer(null)
+      setSpellingAnswer(null)
       setMyResult(null)
     })
 
     // Answer submitted confirmation
     socket.on('player:answer_confirmed', (data) => {
       console.log('Answer confirmed:', data)
+      const d = data as Record<string, unknown>
       setHasAnswered(true)
-      setSelectedAnswer(data.answerIndex)
+      if (d.answerIndex !== undefined) {
+        setSelectedAnswer(d.answerIndex as number)
+      }
+      if (d.spellingAnswer !== undefined) {
+        setSpellingAnswer(d.spellingAnswer as string)
+      }
     })
 
     // Reveal correct answer
     socket.on('game:reveal', (data) => {
       console.log('Reveal:', data)
+      const d = data as Record<string, unknown>
       setPhase('REVEAL')
       setReveal({
-        correctIndex: data.correctIndex,
-        results: data.results,
+        questionType: (d.questionType as QuestionType) || 'MULTIPLE_CHOICE',
+        correctIndex: d.correctIndex as number | undefined,
+        correctAnswer: d.correctAnswer as string | undefined,
+        results: d.results as RevealData['results'],
       })
       // Find my result
       if (playerId) {
-        const myResultData = data.results.find(
-          (r) => r.playerId === playerId
-        )
+        const results = d.results as Array<{ playerId: string; isCorrect: boolean; points: number }>
+        const myResultData = results.find((r) => r.playerId === playerId)
         if (myResultData) {
           setMyResult({
             isCorrect: myResultData.isCorrect,
@@ -219,13 +270,12 @@ export default function PlayPage({ params }: PlayPageProps) {
     }
   }, [sessionId, playerId])
 
-  // Handle answer submission
+  // Handle multiple choice answer submission
   const handleAnswer = useCallback(
     (answerIndex: number) => {
       if (hasAnswered) return
 
       const socket = getSocket({ role: 'player' })
-      // Server identifies the player by socket.id, no playerId needed
       socket.emit('player:submit_answer', {
         sessionId,
         answerIndex,
@@ -233,6 +283,25 @@ export default function PlayPage({ params }: PlayPageProps) {
 
       // Optimistically update UI
       setSelectedAnswer(answerIndex)
+      setHasAnswered(true)
+    },
+    [sessionId, hasAnswered]
+  )
+
+  // Handle spelling answer submission
+  const handleSpellingAnswer = useCallback(
+    (answer: string) => {
+      if (hasAnswered) return
+
+      const socket = getSocket({ role: 'player' })
+      // Use type assertion for custom event
+      ;(socket as unknown as { emit: (event: string, data: unknown) => void }).emit(
+        'player:submit_spelling',
+        { sessionId, answer }
+      )
+
+      // Optimistically update UI
+      setSpellingAnswer(answer)
       setHasAnswered(true)
     },
     [sessionId, hasAnswered]
@@ -283,10 +352,49 @@ export default function PlayPage({ params }: PlayPageProps) {
 
   // QUESTION phase - answer the question
   if (phase === 'QUESTION' && question) {
+    // Spelling question
+    if (question.questionType === 'SPELLING') {
+      return (
+        <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-slate-900 to-slate-800 p-8">
+          <div className="w-full max-w-md">
+            {/* Question counter */}
+            <div className="text-center mb-4 text-slate-400">
+              Question {question.questionIndex + 1} of {question.totalQuestions}
+            </div>
+
+            {/* Audio player */}
+            <div className="mb-8">
+              <SpellingAudio
+                word={question.word || ''}
+                hint={question.hint || undefined}
+                autoPlay={true}
+              />
+            </div>
+
+            {/* Input or waiting state */}
+            {hasAnswered ? (
+              <div className="text-center">
+                <div className="text-4xl mb-4">✓</div>
+                <p className="text-green-400 text-xl">Answer submitted!</p>
+                <p className="text-slate-400 mt-2">You spelled: {spellingAnswer}</p>
+              </div>
+            ) : (
+              <SpellingInput
+                wordLength={question.wordLength || 0}
+                onSubmit={handleSpellingAnswer}
+                timeLeft={timeLeft}
+              />
+            )}
+          </div>
+        </div>
+      )
+    }
+
+    // Multiple choice question (default)
     return (
       <QuestionView
-        prompt={question.prompt}
-        options={question.options}
+        prompt={question.prompt || ''}
+        options={question.options || []}
         timeLimitSec={question.timeLimitSec}
         startedAt={question.startedAt}
         onAnswer={handleAnswer}
@@ -298,6 +406,8 @@ export default function PlayPage({ params }: PlayPageProps) {
 
   // REVEAL phase - show correct answer
   if (phase === 'REVEAL' && reveal) {
+    const isSpelling = reveal.questionType === 'SPELLING'
+
     return (
       <div className="flex min-h-screen flex-col items-center justify-center p-8">
         <div
@@ -312,8 +422,16 @@ export default function PlayPage({ params }: PlayPageProps) {
           <p className="text-2xl text-gray-600">+{myResult.points} points</p>
         )}
         <p className="mt-4 text-gray-500">
-          Correct answer: {question?.options[reveal.correctIndex]}
+          Correct answer:{' '}
+          {isSpelling
+            ? reveal.correctAnswer
+            : question?.options?.[reveal.correctIndex ?? 0]}
         </p>
+        {isSpelling && spellingAnswer && !myResult?.isCorrect && (
+          <p className="mt-2 text-gray-400 text-sm">
+            You spelled: {spellingAnswer}
+          </p>
+        )}
       </div>
     )
   }

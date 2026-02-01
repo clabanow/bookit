@@ -98,17 +98,24 @@ export async function POST(request: Request) {
                 (
                   q: {
                     prompt: string
-                    options: string[]
-                    correctIndex: number
+                    questionType?: 'MULTIPLE_CHOICE' | 'SPELLING'
+                    options?: string[]
+                    correctIndex?: number
+                    answer?: string
+                    hint?: string
                     timeLimitSec?: number
+                    order?: number
                   },
                   index: number
                 ) => ({
                   prompt: q.prompt,
-                  options: q.options,
-                  correctIndex: q.correctIndex,
-                  timeLimitSec: q.timeLimitSec ?? 20,
-                  order: index,
+                  questionType: q.questionType ?? 'MULTIPLE_CHOICE',
+                  options: q.options ?? [],
+                  correctIndex: q.correctIndex ?? 0,
+                  answer: q.answer ?? null,
+                  hint: q.hint ?? null,
+                  timeLimitSec: q.timeLimitSec ?? (q.questionType === 'SPELLING' ? 30 : 20),
+                  order: q.order ?? index,
                 })
               ),
             }

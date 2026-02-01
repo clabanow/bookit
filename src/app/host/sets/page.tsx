@@ -50,6 +50,9 @@ export default async function QuestionSetsPage() {
           </div>
           <div className="flex gap-2">
             <ImportQuestionSet />
+            <Link href="/host/sets/generate">
+              <Button variant="outline">AI Generate</Button>
+            </Link>
             <Link href="/host/sets/new">
               <Button>New Question Set</Button>
             </Link>

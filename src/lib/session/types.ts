@@ -85,8 +85,11 @@ export interface Player {
   /** Whether the player is currently connected */
   connected: boolean
 
-  /** Answer submitted for the current question (null if not answered) */
+  /** Answer submitted for multiple choice questions (null if not answered) */
   lastAnswerIndex: number | null
+
+  /** Typed answer for spelling questions (null if not answered) */
+  lastSpellingAnswer: string | null
 
   /** Timestamp when the answer was submitted (for speed bonus) */
   lastAnswerTime: number | null

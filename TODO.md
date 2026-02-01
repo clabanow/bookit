@@ -267,17 +267,19 @@ This is the single source of truth for all development tasks. Work items are ord
 - **Tests**: Unit tests with mock Redis (19 tests)
 - **Manual Verification**: Sessions persist across restarts
 
-### [ ] M5.4: Deploy to Vercel/Fly.io
+### [x] M5.4: Deploy to Railway
 - **Acceptance Criteria**: App deployed; accessible via URL
-- **Files**: vercel.json or fly.toml, deployment docs
+- **Files**: railway.json, package.json (engines)
 - **Tests**: None
 - **Manual Verification**: Full game flow on production
+- **URL**: https://bookit-production-5539.up.railway.app
 
-### [ ] M5.5: Production smoke test
+### [x] M5.5: Production smoke test
 - **Acceptance Criteria**: End-to-end game works in production
 - **Files**: None
 - **Tests**: None
 - **Manual Verification**: Create room, join, play, verify
+- **Completed**: 2026-01-31
 
 ---
 
@@ -302,33 +304,172 @@ This is the single source of truth for all development tasks. Work items are ord
 
 ---
 
+## M7 — User Authentication & Accounts
+
+### [x] M7.1: Create User and Player Prisma models
+- **Acceptance Criteria**: User model (email, passwordHash, approved, role), Player model (sub-account linked to User, nickname, avatar)
+- **Files**: prisma/schema.prisma, prisma/migrations/20260201015237_add_user_and_player_models
+- **Tests**: None
+- **Manual Verification**: `npx prisma migrate dev` succeeds ✓
+- **Notes**: Each User can have up to 3 Player sub-accounts
+- **Added**: Role enum (USER, ADMIN), ApprovalStatus enum (PENDING, APPROVED, REJECTED)
+
+### [x] M7.2: Implement user registration API
+- **Acceptance Criteria**: POST /api/auth/register creates pending user
+- **Files**: src/lib/auth/password.ts, src/lib/auth/register.ts, src/app/api/auth/register/route.ts, prisma/seed.ts
+- **Tests**: Unit tests for password hashing (5) and registration validation (11)
+- **Manual Verification**: Register, see pending status in DB
+- **Added**: bcryptjs for password hashing, seed script for admin account
+
+### [x] M7.3: Implement user login/logout
+- **Acceptance Criteria**: POST /api/auth/login returns JWT/session; logout clears session
+- **Files**: src/lib/auth/login.ts, src/lib/auth/session.ts, src/app/api/auth/login/route.ts, src/app/api/auth/logout/route.ts, src/app/api/auth/me/route.ts
+- **Tests**: Existing password tests cover verification
+- **Manual Verification**: Login, verify session cookie set ✓
+- **Added**: JWT via jose library, HTTP-only cookies, /api/auth/me endpoint
+- **Verified**: Login returns 200, session cookie works, logout clears session
+
+### [x] M7.4: Build registration and login UI
+- **Acceptance Criteria**: /register and /login pages with forms, error handling
+- **Files**: src/app/register/page.tsx, src/app/login/page.tsx, src/app/page.tsx (added nav links)
+- **Tests**: None (UI)
+- **Manual Verification**: Register, login, see appropriate feedback ✓
+- **Added**: Password confirmation, pending account message, auth links on homepage
+
+### [x] M7.5: Build admin approval dashboard
+- **Acceptance Criteria**: Admin can see pending users, approve/reject them
+- **Files**: src/app/admin/users/page.tsx, src/app/api/admin/users/route.ts, src/app/api/admin/users/[id]/route.ts
+- **Tests**: None
+- **Manual Verification**: Approve user, they can now login ✓
+- **Added**: Filter by status (pending/approved/rejected/all), admin cannot modify their own status
+
+### [x] M7.6: Implement Player sub-account creation
+- **Acceptance Criteria**: User can create up to 3 players with distinct nicknames and secret PINs
+- **Files**: src/app/api/players/route.ts, src/app/api/players/[id]/route.ts, src/app/account/players/page.tsx
+- **Tests**: Manual verification of 3-player limit ✓
+- **Manual Verification**: Create 3 players, try to create 4th (should fail) ✓
+- **Added**: Delete player endpoint, nickname validation, duplicate check, 4-digit secret PIN
+
+### [x] M7.7: Build player selector UI
+- **Acceptance Criteria**: Before joining game, user picks which player sub-account to use
+- **Files**: src/components/player/PlayerSelector.tsx, src/app/join/page.tsx (updated)
+- **Tests**: None (UI)
+- **Manual Verification**: Select different players, join game with correct identity ✓
+- **Added**: Auth check before joining, redirect to login if not authenticated
+
+### [x] M7.8: Protect routes with authentication
+- **Acceptance Criteria**: /join, /play, /host require login; redirect to /login if not authenticated
+- **Files**: src/middleware.ts, src/app/login/page.tsx (updated for redirect param)
+- **Tests**: Manual verification ✓
+- **Manual Verification**: Try accessing /join without login, get redirected ✓
+- **Protected routes**: /join, /play/*, /host, /admin/*, /account/*
+
+---
+
+## M8 — AI Question Set Generation
+
+### [x] M8.1: Setup image upload infrastructure
+- **Acceptance Criteria**: Users can upload images for AI processing
+- **Files**: Image upload handled inline in /api/ai/generate (base64)
+- **Tests**: None
+- **Manual Verification**: Upload image in generate UI ✓
+
+### [x] M8.2: Integrate vision AI for text extraction
+- **Acceptance Criteria**: Send image to AI, receive extracted text/content
+- **Files**: src/lib/ai/vision.ts, src/lib/ai/client.ts
+- **Tests**: None
+- **Manual Verification**: AI extracts content from homework photos ✓
+- **Provider**: Claude Vision (claude-sonnet-4)
+
+### [x] M8.3: Implement question generation from text
+- **Acceptance Criteria**: LLM generates questions from extracted content
+- **Files**: src/lib/ai/questionGenerator.ts
+- **Tests**: None
+- **Manual Verification**: Generate questions from vocab list ✓
+
+### [x] M8.4: Build AI question generation UI
+- **Acceptance Criteria**: Upload image → generate questions → review/edit → save
+- **Files**: src/app/host/sets/generate/page.tsx
+- **Tests**: None (UI)
+- **Manual Verification**: Full flow from image to saved question set ✓
+- **Note**: Requires ANTHROPIC_API_KEY environment variable
+
+### [ ] M8.5: Add content type detection
+- **Acceptance Criteria**: AI detects if content is vocab, math, history, etc. and adjusts question format
+- **Files**: src/lib/ai/contentDetector.ts
+- **Tests**: Unit tests for classification
+- **Manual Verification**: Upload different content types, verify correct detection
+- **Note**: Content type is already detected during extraction in M8.2
+
+---
+
+## M9 — Spelling Mode
+
+### [x] M9.1: Add question type to schema
+- **Acceptance Criteria**: Questions can be "MULTIPLE_CHOICE" or "SPELLING"
+- **Files**: prisma/schema.prisma, prisma/migrations/20260201021329_add_spelling_mode
+- **Tests**: None
+- **Manual Verification**: Migration runs, can create spelling questions ✓
+- **Added**: QuestionType enum, answer and hint fields on Question
+
+### [x] M9.2: Implement text-to-speech for words
+- **Acceptance Criteria**: Browser speaks the word to spell; replay button available
+- **Files**: src/lib/audio/textToSpeech.ts, src/components/play/SpellingAudio.tsx
+- **Tests**: None (browser API)
+- **Manual Verification**: Uses Web Speech API ✓
+
+### [x] M9.3: Build spelling input UI
+- **Acceptance Criteria**: Text input instead of multiple choice buttons; shows letter count hint
+- **Files**: src/components/play/SpellingInput.tsx
+- **Tests**: None (UI)
+- **Manual Verification**: Type answer, submit ✓
+
+### [x] M9.4: Implement spelling answer checking
+- **Acceptance Criteria**: Exact match required (case-insensitive)
+- **Files**: src/lib/scoring/spelling.ts
+- **Tests**: Levenshtein distance for future partial credit
+- **Manual Verification**: Correct and incorrect spellings scored properly ✓
+
+### [x] M9.5: Update game flow for spelling mode
+- **Acceptance Criteria**: Server handles spelling questions
+- **Files**: src/lib/realtime/handlers/game.ts, src/lib/realtime/handlers/player.ts, src/lib/session/types.ts
+- **Tests**: Updated player types ✓
+- **Manual Verification**: Game flow supports both question types ✓
+
+### [ ] M9.6: Create spelling question set editor
+- **Acceptance Criteria**: Add words with optional hints; preview pronunciation
+- **Files**: src/components/host/SpellingEditor.tsx
+- **Tests**: None (UI)
+- **Manual Verification**: Create spelling set, play it
+- **Note**: Can also use AI generation with spelling mode
+
+---
+
 ## Current Status
 
-**Current Task**: Completed for now - remaining tasks require infrastructure
-**Completed This Session**:
-  - M4.5-M4.6: Input validation, profanity filter
-  - M5.1, M5.3: Environment config, Redis session store
-  - M6.3: Question set import/export
-  - M6.7 (partial): Kick player feature
-  - M6.10 (partial): Accessibility improvements (ARIA labels, live regions)
-  - Integration: Profanity filter, rate limiting, input validation in handlers
-  - Validation: Question set existence check in room creation
-  - UX: Error boundary, loading state, 404 page
-**Tests**: 229 passing
-**M5.1 + M5.3 Completed**: Environment config, Redis session store
-**M4 Completed**: Resilience & Correctness
-  - Player/host reconnect, session cleanup
-  - Rate limiting, input validation, profanity filter
-**M3 Completed**: Gameplay Loop (116 tests)
-  - State machine, scoring logic
-  - Game flow: countdown, question, reveal, leaderboard, end
-  - Player game UI with answer submission
-**Last Updated**: 2026-01-31
-**M0 Completed**: All bootstrap tasks done
-**M1 Completed**: Walking Skeleton complete
-  - Socket.IO server, session store, room creation
-  - Host lobby, player join, roster sync, disconnect handling
-**M2 Completed**: Question Set CRUD (70 tests)
-  - Prisma models, API routes for question sets
-  - Question set list page, editor UI
-  - Host selects question set before starting game
+**Current Task**: M8 & M9 COMPLETE! Minor polish tasks remaining.
+**Next Up**: Add ANTHROPIC_API_KEY to Railway for AI features
+
+**Production URL**: https://bookit-production-5539.up.railway.app
+
+**Last Updated**: 2026-02-01
+
+### Completed Milestones:
+- **M0**: Project Bootstrap ✓
+- **M1**: Walking Skeleton (rooms, roster, realtime) ✓
+- **M2**: Question Set CRUD ✓
+- **M3**: Gameplay Loop (classic mode) ✓
+- **M4**: Resilience & Correctness ✓
+- **M5**: Deployment (Railway) ✓
+- **M7**: User Authentication ✓
+- **M8**: AI Question Generation ✓ (needs API key)
+- **M9**: Spelling Mode ✓
+- **M5**: Deployment (Railway) ✓
+
+### In Progress:
+- **M6**: Post-MVP features (partial)
+- **M7**: User Authentication & Accounts ✓ COMPLETE
+- **M8**: AI Question Set Generation
+- **M9**: Spelling Mode
+
+**Tests**: 245 passing

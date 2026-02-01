@@ -86,6 +86,7 @@ export function createPlayer(
     score: 0,
     connected: true,
     lastAnswerIndex: null,
+    lastSpellingAnswer: null,
     lastAnswerTime: null,
   }
 }

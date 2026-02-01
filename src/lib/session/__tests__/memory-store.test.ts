@@ -107,7 +107,7 @@ describe('MemorySessionStore', () => {
         score: 0,
         connected: true,
         lastAnswerIndex: null,
-        lastAnswerTime: null,
+        lastAnswerTime: null, lastSpellingAnswer: null,
       }
       await store.addPlayer(session.sessionId, player)
 
@@ -139,7 +139,7 @@ describe('MemorySessionStore', () => {
       score: 0,
       connected: true,
       lastAnswerIndex: null,
-      lastAnswerTime: null,
+      lastAnswerTime: null, lastSpellingAnswer: null,
     })
 
     it('adds a player to a session', async () => {
@@ -266,7 +266,7 @@ describe('MemorySessionStore', () => {
         score: 0,
         connected: true,
         lastAnswerIndex: null,
-        lastAnswerTime: null,
+        lastAnswerTime: null, lastSpellingAnswer: null,
       })
       await store.addPlayer(s1.sessionId, {
         playerId: 'p2',
@@ -275,7 +275,7 @@ describe('MemorySessionStore', () => {
         score: 0,
         connected: true,
         lastAnswerIndex: null,
-        lastAnswerTime: null,
+        lastAnswerTime: null, lastSpellingAnswer: null,
       })
       await store.addPlayer(s2.sessionId, {
         playerId: 'p3',
@@ -284,7 +284,7 @@ describe('MemorySessionStore', () => {
         score: 0,
         connected: true,
         lastAnswerIndex: null,
-        lastAnswerTime: null,
+        lastAnswerTime: null, lastSpellingAnswer: null,
       })
 
       expect(store.getStats()).toEqual({ sessions: 2, totalPlayers: 3 })

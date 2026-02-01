@@ -266,6 +266,100 @@ export function registerPlayerHandlers(io: Server, socket: Socket): void {
   })
 
   /**
+   * Handle spelling answer submission.
+   *
+   * For spelling mode questions, players submit a typed word instead of an index.
+   */
+  socket.on('player:submit_spelling', async (data: { sessionId: string; answer: string }) => {
+    try {
+      const { sessionId, answer } = data
+
+      // Rate limiting
+      const rateLimit = checkRateLimit(socket.id, 'submitAnswer')
+      if (!rateLimit.allowed) {
+        socket.emit('error', {
+          code: PlayerErrorCodes.RATE_LIMITED,
+          message: rateLimit.message || 'Too many attempts.',
+          details: { retryAfter: rateLimit.retryAfter },
+        })
+        return
+      }
+
+      // Basic validation
+      if (!answer || typeof answer !== 'string') {
+        socket.emit('error', {
+          code: 'INVALID_ANSWER',
+          message: 'Answer is required',
+        })
+        return
+      }
+
+      const store = getSessionStore()
+
+      // Find the session
+      const session = await store.getSession(sessionId)
+      if (!session) {
+        socket.emit('error', {
+          code: 'SESSION_NOT_FOUND',
+          message: 'Game session not found',
+        })
+        return
+      }
+
+      // Check we're in QUESTION phase
+      if (session.phase !== 'QUESTION') {
+        socket.emit('error', {
+          code: 'INVALID_PHASE',
+          message: 'Cannot submit answer right now',
+        })
+        return
+      }
+
+      // Find the player
+      const players = await store.getPlayers(sessionId)
+      const player = players.find((p) => p.socketId === socket.id)
+
+      if (!player) {
+        socket.emit('error', {
+          code: 'PLAYER_NOT_FOUND',
+          message: 'Player not found in this game',
+        })
+        return
+      }
+
+      // Check if already answered
+      if (player.lastSpellingAnswer !== null) {
+        socket.emit('error', {
+          code: 'ALREADY_ANSWERED',
+          message: 'You have already submitted an answer',
+        })
+        return
+      }
+
+      // Record the spelling answer
+      const answerTime = Date.now()
+      await store.updatePlayer(sessionId, player.playerId, {
+        lastSpellingAnswer: answer.trim(),
+        lastAnswerTime: answerTime,
+      })
+
+      // Send confirmation
+      socket.emit('player:answer_confirmed', {
+        spellingAnswer: answer.trim(),
+        timestamp: answerTime,
+      })
+
+      console.log(`📝 Player "${player.nickname}" spelled: ${answer}`)
+    } catch (error) {
+      console.error('Error submitting spelling answer:', error)
+      socket.emit('error', {
+        code: 'INTERNAL_ERROR',
+        message: 'Failed to submit answer',
+      })
+    }
+  })
+
+  /**
    * Handle player reconnection.
    *
    * When a player refreshes their browser or loses connection temporarily,

@@ -5,6 +5,16 @@ import Link from 'next/link';
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white p-8">
+      {/* Auth links in top-right */}
+      <nav className="absolute top-4 right-4 flex gap-4">
+        <Link href="/login" className="text-sm text-gray-600 hover:text-blue-600">
+          Sign In
+        </Link>
+        <Link href="/register" className="text-sm text-gray-600 hover:text-blue-600">
+          Register
+        </Link>
+      </nav>
+
       <main className="flex flex-col items-center text-center">
         <h1 className="mb-4 text-6xl font-bold text-blue-600">Bookit</h1>
         <p className="mb-12 max-w-md text-xl text-gray-600">

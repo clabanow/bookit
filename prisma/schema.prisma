@@ -10,28 +10,95 @@ datasource db {
   url       = env("DATABASE_URL")
 }
 
+// ============================================
+// Authentication & Account Models
+// ============================================
+
+/// User role determines permissions
+enum Role {
+  USER   // Regular user, can host and play
+  ADMIN  // Can approve users and manage system
+}
+
+/// User approval status
+enum ApprovalStatus {
+  PENDING   // Waiting for admin approval
+  APPROVED  // Can login and use the system
+  REJECTED  // Admin rejected the registration
+}
+
+/// User account - the login identity
+/// Each user can have up to 3 Player sub-accounts
+model User {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  passwordHash String
+  role         Role           @default(USER)
+  status       ApprovalStatus @default(PENDING)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  // Relations
+  players      Player[]       // Up to 3 player sub-accounts
+  questionSets QuestionSet[]  // Question sets owned by this user
+}
+
+/// Player sub-account - the identity used in games
+/// Each user can have up to 3 players (e.g., for family members)
+/// Each player has a secret PIN to prevent siblings from using the wrong account
+model Player {
+  id        String   @id @default(cuid())
+  userId    String
+  nickname  String
+  pinHash   String   // 4-digit secret PIN (hashed for security)
+  avatar    String?  // Optional avatar URL for future use
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ============================================
+// Game Content Models
+// ============================================
+
+/// Question type determines how the question is displayed and answered
+enum QuestionType {
+  MULTIPLE_CHOICE  // Traditional 4-option selection
+  SPELLING         // Word is spoken, player types the spelling
+}
+
 model QuestionSet {
   id        String     @id @default(cuid())
   title     String
-  ownerId   String?    // For future auth
+  ownerId   String?    // Links to User.id
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+
+  // Relations
   questions Question[]
+  owner     User?      @relation(fields: [ownerId], references: [id], onDelete: SetNull)
 
   @@index([ownerId])
 }
 
 model Question {
-  id           String      @id @default(cuid())
+  id           String       @id @default(cuid())
   setId        String
-  prompt       String
-  options      String[]    // Array of 4 options
-  correctIndex Int         // 0-3
-  timeLimitSec Int         @default(20)
-  order        Int         @default(0)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  questionSet  QuestionSet @relation(fields: [setId], references: [id], onDelete: Cascade)
+  questionType QuestionType @default(MULTIPLE_CHOICE)
+  prompt       String       // For MC: the question text. For spelling: the word to spell
+  options      String[]     // Array of 4 options (only for MULTIPLE_CHOICE)
+  correctIndex Int          // 0-3 for MC, ignored for spelling
+  answer       String?      // The correct spelling (only for SPELLING type)
+  hint         String?      // Optional hint for spelling (e.g., "It's a color")
+  timeLimitSec Int          @default(20)
+  order        Int          @default(0)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  questionSet  QuestionSet  @relation(fields: [setId], references: [id], onDelete: Cascade)
 
   @@index([setId])
 }

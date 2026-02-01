@@ -109,8 +109,11 @@ export async function startQuestion(
   questions: Array<{
     id: string
     prompt: string
+    questionType: 'MULTIPLE_CHOICE' | 'SPELLING'
     options: string[]
     correctIndex: number
+    answer: string | null
+    hint: string | null
     timeLimitSec: number
   }>
 ): Promise<void> {
@@ -149,6 +152,7 @@ export async function startQuestion(
   for (const player of players) {
     await store.updatePlayer(sessionId, player.playerId, {
       lastAnswerIndex: null,
+      lastSpellingAnswer: null,
       lastAnswerTime: null,
     })
   }
@@ -157,15 +161,28 @@ export async function startQuestion(
 
   // Send question to all clients
   // Note: We don't send the correct answer to prevent cheating!
-  io.to(sessionId).emit('game:question', {
+  const questionData: Record<string, unknown> = {
     phase: 'QUESTION',
     questionIndex,
     totalQuestions: questions.length,
-    prompt: question.prompt,
-    options: question.options,
+    questionType: question.questionType,
     timeLimitSec: question.timeLimitSec,
     startedAt: now,
-  })
+  }
+
+  if (question.questionType === 'SPELLING') {
+    // For spelling: send the word to pronounce (prompt) and optional hint
+    // The player will hear this spoken aloud
+    questionData.word = question.prompt
+    questionData.wordLength = question.answer?.length || question.prompt.length
+    questionData.hint = question.hint
+  } else {
+    // For multiple choice: send prompt and options
+    questionData.prompt = question.prompt
+    questionData.options = question.options
+  }
+
+  io.to(sessionId).emit('game:question', questionData)
 
   // Set up timer for when question ends
   setTimeout(async () => {
@@ -186,8 +203,11 @@ export async function endQuestion(
   questions: Array<{
     id: string
     prompt: string
+    questionType: 'MULTIPLE_CHOICE' | 'SPELLING'
     options: string[]
     correctIndex: number
+    answer: string | null
+    hint: string | null
     timeLimitSec: number
   }>
 ): Promise<void> {
@@ -221,27 +241,49 @@ export async function endQuestion(
 
   // Calculate and update scores
   const { calculateScoreFromTimestamps } = await import('@/lib/scoring')
+  const { scoreSpellingAnswer } = await import('@/lib/scoring/spelling')
   const players = await store.getPlayers(sessionId)
   const results: Array<{
     playerId: string
     nickname: string
     answerIndex: number | null
+    spellingAnswer: string | null
     isCorrect: boolean
     points: number
     totalScore: number
   }> = []
 
   for (const player of players) {
-    const isCorrect = player.lastAnswerIndex === question.correctIndex
-    const points =
-      player.lastAnswerTime && session.questionStartedAt
-        ? calculateScoreFromTimestamps(
-            isCorrect,
-            session.questionStartedAt,
-            player.lastAnswerTime,
-            question.timeLimitSec
-          )
-        : 0
+    let isCorrect = false
+    let points = 0
+
+    if (question.questionType === 'SPELLING') {
+      // Spelling mode: check if typed answer matches
+      if (player.lastSpellingAnswer && question.answer) {
+        const spellingResult = scoreSpellingAnswer({
+          submittedAnswer: player.lastSpellingAnswer,
+          correctAnswer: question.answer,
+          timeTakenMs: player.lastAnswerTime && session.questionStartedAt
+            ? player.lastAnswerTime - session.questionStartedAt
+            : question.timeLimitSec * 1000,
+          timeLimitMs: question.timeLimitSec * 1000,
+        })
+        isCorrect = spellingResult.correct
+        points = spellingResult.points
+      }
+    } else {
+      // Multiple choice mode: check if selected option matches
+      isCorrect = player.lastAnswerIndex === question.correctIndex
+      points =
+        player.lastAnswerTime && session.questionStartedAt
+          ? calculateScoreFromTimestamps(
+              isCorrect,
+              session.questionStartedAt,
+              player.lastAnswerTime,
+              question.timeLimitSec
+            )
+          : 0
+    }
 
     // Update player's total score
     const newScore = player.score + points
@@ -253,21 +295,30 @@ export async function endQuestion(
       playerId: player.playerId,
       nickname: player.nickname,
       answerIndex: player.lastAnswerIndex,
+      spellingAnswer: player.lastSpellingAnswer || null,
       isCorrect,
       points,
       totalScore: newScore,
     })
   }
 
-  console.log(`✅ Question ${questionIndex + 1} revealed, correct: ${question.correctIndex}`)
+  console.log(`✅ Question ${questionIndex + 1} revealed`)
 
   // Broadcast reveal to all clients
-  io.to(sessionId).emit('game:reveal', {
+  const revealData: Record<string, unknown> = {
     phase: 'REVEAL',
     questionIndex,
-    correctIndex: question.correctIndex,
+    questionType: question.questionType,
     results,
-  })
+  }
+
+  if (question.questionType === 'SPELLING') {
+    revealData.correctAnswer = question.answer
+  } else {
+    revealData.correctIndex = question.correctIndex
+  }
+
+  io.to(sessionId).emit('game:reveal', revealData)
 }
 
 /**
@@ -281,8 +332,11 @@ export async function showLeaderboard(
   questions: Array<{
     id: string
     prompt: string
+    questionType: 'MULTIPLE_CHOICE' | 'SPELLING'
     options: string[]
     correctIndex: number
+    answer: string | null
+    hint: string | null
     timeLimitSec: number
   }>
 ): Promise<void> {
