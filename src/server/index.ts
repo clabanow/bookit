@@ -42,6 +42,10 @@ async function start() {
     // Create a raw HTTP server
     // This is what both Next.js and Socket.IO will attach to
     const httpServer = createServer((req, res) => {
+      // Log incoming requests in production for debugging
+      if (!dev) {
+        console.log(`📨 ${req.method} ${req.url}`)
+      }
       // Let Next.js handle all HTTP requests
       // Socket.IO intercepts WebSocket upgrade requests before they reach here
       nextHandler(req, res)
