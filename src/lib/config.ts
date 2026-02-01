@@ -87,8 +87,9 @@ function parseConfig(): AppConfig {
 
     // Server
     port: parseInt(process.env.PORT || '3000', 10),
-    // In production, bind to 0.0.0.0 to accept external connections
-    hostname: process.env.HOSTNAME || (isProduction ? '0.0.0.0' : 'localhost'),
+    // In production, always bind to 0.0.0.0 to accept external connections
+    // (Railway sets HOSTNAME to container ID, which we don't want to use for binding)
+    hostname: isProduction ? '0.0.0.0' : (process.env.HOSTNAME || 'localhost'),
 
     // Database - required in production, optional in development
     databaseUrl: process.env.DATABASE_URL,
