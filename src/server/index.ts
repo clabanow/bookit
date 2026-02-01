@@ -73,8 +73,8 @@ async function start() {
     // (Alternative: use a module-level export)
     ;(global as Record<string, unknown>).__socketIO = io
 
-    // Start listening on all interfaces
-    httpServer.listen(port, '0.0.0.0', () => {
+    // Start listening (let Node choose the interface)
+    httpServer.listen(port, () => {
       console.log('')
       console.log('  ╔══════════════════════════════════════════════╗')
       console.log('  ║           🎮 Bookit Game Server              ║')
