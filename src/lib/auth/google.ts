@@ -35,7 +35,8 @@ function getClientSecret(): string {
 }
 
 function getRedirectUri(): string {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  // Use APP_URL for server-side, fall back to NEXT_PUBLIC_APP_URL, then localhost
+  const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   return `${appUrl}/api/auth/callback/google`
 }
 

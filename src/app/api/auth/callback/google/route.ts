@@ -29,7 +29,8 @@ import {
 const STATE_COOKIE = 'bookit_oauth_state'
 
 export async function GET(request: NextRequest) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  // Use APP_URL for server-side, fall back to NEXT_PUBLIC_APP_URL, then localhost
+  const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
   try {
     const searchParams = request.nextUrl.searchParams
