@@ -45,6 +45,12 @@ export const RateLimitConfigs = {
     windowMs: 60 * 1000, // 3 rooms per minute
     message: 'Too many rooms created. Please wait.',
   },
+  /** Sending chat messages - 1 message per 2 seconds */
+  sendMessage: {
+    maxRequests: 1,
+    windowMs: 2000, // 1 message per 2 seconds
+    message: 'Wait a moment before sending another message.',
+  },
 } as const
 
 /**

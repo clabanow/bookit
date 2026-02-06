@@ -281,7 +281,15 @@ export default function PlayersPage() {
                         {deleting === player.id ? '...' : 'Delete'}
                       </Button>
                     </div>
-                    <div className="flex gap-2 mt-3 ml-13">
+                    <div className="flex gap-2 mt-3 ml-13 flex-wrap">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs h-7"
+                        onClick={() => router.push(`/spin?playerId=${player.id}`)}
+                      >
+                        Daily Spin
+                      </Button>
                       <Button
                         variant="outline"
                         size="sm"

@@ -42,6 +42,7 @@ model User {
   // Relations
   players      Player[]       // Up to 3 player sub-accounts
   questionSets QuestionSet[]  // Question sets owned by this user
+  chatMessages ChatMessage[]  // Chat messages sent by this user
 }
 
 /// Player sub-account - the identity used in games
@@ -53,14 +54,16 @@ model Player {
   nickname  String
   pinHash   String   // 4-digit secret PIN (hashed for security)
   avatar    String?  // Optional avatar URL for future use
-  coins     Int      @default(0) // Gold coins earned from gameplay
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  coins        Int       @default(0) // Gold coins earned from gameplay
+  lastSpinDate DateTime? // Last daily spin date (UTC) for one-spin-per-day
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   // Relations
-  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  ownedCards PlayerCard[] // Cards this player has purchased
-  gamePlays  GamePlay[]   // Game history for anti-farming tracking
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ownedCards   PlayerCard[] // Cards this player has purchased
+  gamePlays    GamePlay[]   // Game history for anti-farming tracking
+  chatMessages ChatMessage[] // Chat messages sent by this player
 
   @@index([userId])
 }
@@ -164,4 +167,26 @@ model GamePlay {
 
   @@index([playerId])
   @@index([playerId, questionSetId]) // For quickly checking repeat plays
+}
+
+// ============================================
+// Chat Models
+// ============================================
+
+/// Chat message — persisted for global chat, ephemeral for game chat (socket-only)
+model ChatMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  playerId  String
+  channel   String   @default("global") // "global" for global chat
+  content   String
+  createdAt DateTime @default(now())
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([channel, createdAt])
+  @@index([userId])
+  @@index([playerId])
 }

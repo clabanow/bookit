@@ -7,6 +7,9 @@ export default function Home() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4 md:p-8">
       {/* Auth links in top-right */}
       <nav className="absolute top-4 right-4 flex gap-3 md:gap-4">
+        <Link href="/chat" className="text-sm text-gray-600 hover:text-blue-600">
+          Chat
+        </Link>
         <Link href="/login" className="text-sm text-gray-600 hover:text-blue-600">
           Sign In
         </Link>

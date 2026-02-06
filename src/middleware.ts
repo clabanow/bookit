@@ -20,7 +20,7 @@ import { jwtVerify } from 'jose'
 const SESSION_COOKIE = 'bookit_session'
 
 // Routes that require authentication
-const protectedPaths = ['/join', '/play', '/host', '/admin', '/account']
+const protectedPaths = ['/join', '/play', '/host', '/admin', '/account', '/chat', '/spin']
 
 function getSecretKey(): Uint8Array {
   const secret = process.env.JWT_SECRET || 'development-secret-change-in-production'

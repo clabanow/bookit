@@ -12,7 +12,7 @@
 
 import { Server as HttpServer } from 'http'
 import { Server, Socket } from 'socket.io'
-import { registerHostHandlers, registerPlayerHandlers, handleDisconnect } from '@/lib/realtime/handlers'
+import { registerHostHandlers, registerPlayerHandlers, registerChatHandlers, handleDisconnect } from '@/lib/realtime/handlers'
 import { config } from '@/lib/config'
 
 // Re-export types that handlers will need
@@ -72,6 +72,9 @@ function handleConnection(io: Server, socket: Socket): void {
     timestamp: Date.now(),
   })
 
+  // Register chat handlers for ALL connections (hosts and players can both chat)
+  registerChatHandlers(io, socket)
+
   // Register role-specific event handlers
   if (role === 'host') {
     registerHostHandlers(io, socket)
@@ -117,6 +120,15 @@ export interface ClientToServerEvents {
     answerIndex: number
   }) => void
   'player:reconnect': (data: { sessionId: string; playerId: string }) => void
+  'chat:join_channel': (data: { channel: string }) => void
+  'chat:leave_channel': (data: { channel: string }) => void
+  'chat:send': (data: {
+    channel: string
+    content: string
+    playerId: string
+    userId: string
+    nickname: string
+  }) => void
 }
 
 // Events that the server can send to clients
@@ -223,5 +235,13 @@ export interface ServerToClientEvents {
       nickname: string
       score: number
     }>
+  }) => void
+  'chat:message': (data: {
+    id: string
+    playerId: string
+    nickname: string
+    content: string
+    createdAt: string
+    channel: string
   }) => void
 }

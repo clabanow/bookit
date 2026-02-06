@@ -19,6 +19,7 @@ import { getSocket, disconnectSocket } from '@/lib/realtime/client'
 import { QuestionView } from '@/components/play/QuestionView'
 import { SpellingAudio } from '@/components/play/SpellingAudio'
 import { SpellingInput } from '@/components/play/SpellingInput'
+import { GameChat } from '@/components/chat/GameChat'
 import { Button } from '@/components/ui/button'
 
 type GamePhase = 'LOBBY' | 'COUNTDOWN' | 'QUESTION' | 'REVEAL' | 'LEADERBOARD' | 'END'
@@ -83,6 +84,24 @@ export default function PlayPage({ params }: PlayPageProps) {
   const [myResult, setMyResult] = useState<{ isCorrect: boolean; points: number } | null>(null)
   const [timeLeft, setTimeLeft] = useState<number>(0)
   const [coinResult, setCoinResult] = useState<{ coinsEarned: number; isRepeatPlay: boolean } | null>(null)
+  const [chatUserId, setChatUserId] = useState<string | null>(null)
+  const [chatNickname, setChatNickname] = useState<string>('')
+
+  // Fetch userId for chat (runs once on mount)
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const res = await fetch('/api/auth/me')
+        if (res.ok) {
+          const data = await res.json()
+          setChatUserId(data.user.id)
+        }
+      } catch {
+        // Chat is non-critical — silently fail
+      }
+    }
+    fetchUser()
+  }, [])
 
   // Timer for questions
   useEffect(() => {
@@ -278,6 +297,11 @@ export default function PlayPage({ params }: PlayPageProps) {
       setPlayerId(data.playerId)
       // Store in localStorage for reconnection after refresh
       localStorage.setItem(`bookit_player_${sessionId}`, data.playerId)
+      // Extract nickname for chat
+      const me = data.players.find(
+        (p: { playerId: string }) => p.playerId === data.playerId
+      )
+      if (me) setChatNickname((me as { nickname: string }).nickname)
     })
 
     return () => {
@@ -322,6 +346,16 @@ export default function PlayPage({ params }: PlayPageProps) {
     [sessionId, hasAnswered]
   )
 
+  // Chat overlay — renders as a fixed floating button on all phases
+  const chatOverlay = (
+    <GameChatOverlay
+      sessionId={sessionId}
+      playerId={playerId}
+      userId={chatUserId}
+      nickname={chatNickname}
+    />
+  )
+
   // Error display
   if (error) {
     return (
@@ -339,29 +373,35 @@ export default function PlayPage({ params }: PlayPageProps) {
   // LOBBY phase - waiting for game to start
   if (phase === 'LOBBY') {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-purple-600 to-purple-800 p-4 md:p-8 text-white">
-        <div className="mb-6 md:mb-8 text-5xl md:text-6xl">🎮</div>
-        <h1 className="mb-4 text-xl md:text-2xl font-bold">You&apos;re in!</h1>
-        <p className="text-purple-200 text-center">Waiting for host to start the game...</p>
-        <div className="mt-6 md:mt-8 animate-pulse text-base md:text-lg">Get ready!</div>
-      </div>
+      <>
+        <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-purple-600 to-purple-800 p-4 md:p-8 text-white">
+          <div className="mb-6 md:mb-8 text-5xl md:text-6xl">🎮</div>
+          <h1 className="mb-4 text-xl md:text-2xl font-bold">You&apos;re in!</h1>
+          <p className="text-purple-200 text-center">Waiting for host to start the game...</p>
+          <div className="mt-6 md:mt-8 animate-pulse text-base md:text-lg">Get ready!</div>
+        </div>
+        {chatOverlay}
+      </>
     )
   }
 
   // COUNTDOWN phase - 3-2-1 before question
   if (phase === 'COUNTDOWN') {
     return (
-      <div
-        role="timer"
-        aria-live="polite"
-        aria-label={`Countdown: ${countdown} seconds`}
-        className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-600 to-blue-800 p-4 md:p-8 text-white"
-      >
-        <div className="text-7xl sm:text-8xl md:text-9xl font-bold" aria-hidden="true">
-          {countdown}
+      <>
+        <div
+          role="timer"
+          aria-live="polite"
+          aria-label={`Countdown: ${countdown} seconds`}
+          className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-600 to-blue-800 p-4 md:p-8 text-white"
+        >
+          <div className="text-7xl sm:text-8xl md:text-9xl font-bold" aria-hidden="true">
+            {countdown}
+          </div>
+          <p className="mt-6 md:mt-8 text-lg md:text-xl">Get ready!</p>
         </div>
-        <p className="mt-6 md:mt-8 text-lg md:text-xl">Get ready!</p>
-      </div>
+        {chatOverlay}
+      </>
     )
   }
 
@@ -370,52 +410,58 @@ export default function PlayPage({ params }: PlayPageProps) {
     // Spelling question
     if (question.questionType === 'SPELLING') {
       return (
-        <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-slate-900 to-slate-800 p-4 md:p-8">
-          <div className="w-full max-w-md">
-            {/* Question counter */}
-            <div className="text-center mb-4 text-sm md:text-base text-slate-400">
-              Question {question.questionIndex + 1} of {question.totalQuestions}
-            </div>
-
-            {/* Audio player */}
-            <div className="mb-6 md:mb-8">
-              <SpellingAudio
-                word={question.word || ''}
-                hint={question.hint || undefined}
-                autoPlay={true}
-              />
-            </div>
-
-            {/* Input or waiting state */}
-            {hasAnswered ? (
-              <div className="text-center">
-                <div className="text-3xl md:text-4xl mb-4">✓</div>
-                <p className="text-green-400 text-lg md:text-xl">Answer submitted!</p>
-                <p className="text-slate-400 mt-2 text-sm md:text-base">You spelled: {spellingAnswer}</p>
+        <>
+          <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-slate-900 to-slate-800 p-4 md:p-8">
+            <div className="w-full max-w-md">
+              {/* Question counter */}
+              <div className="text-center mb-4 text-sm md:text-base text-slate-400">
+                Question {question.questionIndex + 1} of {question.totalQuestions}
               </div>
-            ) : (
-              <SpellingInput
-                wordLength={question.wordLength || 0}
-                onSubmit={handleSpellingAnswer}
-                timeLeft={timeLeft}
-              />
-            )}
+
+              {/* Audio player */}
+              <div className="mb-6 md:mb-8">
+                <SpellingAudio
+                  word={question.word || ''}
+                  hint={question.hint || undefined}
+                  autoPlay={true}
+                />
+              </div>
+
+              {/* Input or waiting state */}
+              {hasAnswered ? (
+                <div className="text-center">
+                  <div className="text-3xl md:text-4xl mb-4">✓</div>
+                  <p className="text-green-400 text-lg md:text-xl">Answer submitted!</p>
+                  <p className="text-slate-400 mt-2 text-sm md:text-base">You spelled: {spellingAnswer}</p>
+                </div>
+              ) : (
+                <SpellingInput
+                  wordLength={question.wordLength || 0}
+                  onSubmit={handleSpellingAnswer}
+                  timeLeft={timeLeft}
+                />
+              )}
+            </div>
           </div>
-        </div>
+          {chatOverlay}
+        </>
       )
     }
 
     // Multiple choice question (default)
     return (
-      <QuestionView
-        prompt={question.prompt || ''}
-        options={question.options || []}
-        timeLimitSec={question.timeLimitSec}
-        startedAt={question.startedAt}
-        onAnswer={handleAnswer}
-        hasAnswered={hasAnswered}
-        selectedAnswer={selectedAnswer}
-      />
+      <>
+        <QuestionView
+          prompt={question.prompt || ''}
+          options={question.options || []}
+          timeLimitSec={question.timeLimitSec}
+          startedAt={question.startedAt}
+          onAnswer={handleAnswer}
+          hasAnswered={hasAnswered}
+          selectedAnswer={selectedAnswer}
+        />
+        {chatOverlay}
+      </>
     )
   }
 
@@ -424,60 +470,66 @@ export default function PlayPage({ params }: PlayPageProps) {
     const isSpelling = reveal.questionType === 'SPELLING'
 
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8">
-        <div
-          className={`mb-6 md:mb-8 text-6xl sm:text-7xl md:text-8xl ${myResult?.isCorrect ? 'text-green-500' : 'text-red-500'}`}
-        >
-          {myResult?.isCorrect ? '✓' : '✗'}
-        </div>
-        <h1 className="mb-4 text-2xl md:text-3xl font-bold">
-          {myResult?.isCorrect ? 'Correct!' : 'Wrong!'}
-        </h1>
-        {myResult && (
-          <p className="text-xl md:text-2xl text-gray-600">+{myResult.points} points</p>
-        )}
-        <p className="mt-4 text-sm md:text-base text-gray-500 text-center px-4">
-          Correct answer:{' '}
-          {isSpelling
-            ? reveal.correctAnswer
-            : question?.options?.[reveal.correctIndex ?? 0]}
-        </p>
-        {isSpelling && spellingAnswer && !myResult?.isCorrect && (
-          <p className="mt-2 text-gray-400 text-xs md:text-sm">
-            You spelled: {spellingAnswer}
+      <>
+        <div className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8">
+          <div
+            className={`mb-6 md:mb-8 text-6xl sm:text-7xl md:text-8xl ${myResult?.isCorrect ? 'text-green-500' : 'text-red-500'}`}
+          >
+            {myResult?.isCorrect ? '✓' : '✗'}
+          </div>
+          <h1 className="mb-4 text-2xl md:text-3xl font-bold">
+            {myResult?.isCorrect ? 'Correct!' : 'Wrong!'}
+          </h1>
+          {myResult && (
+            <p className="text-xl md:text-2xl text-gray-600">+{myResult.points} points</p>
+          )}
+          <p className="mt-4 text-sm md:text-base text-gray-500 text-center px-4">
+            Correct answer:{' '}
+            {isSpelling
+              ? reveal.correctAnswer
+              : question?.options?.[reveal.correctIndex ?? 0]}
           </p>
-        )}
-      </div>
+          {isSpelling && spellingAnswer && !myResult?.isCorrect && (
+            <p className="mt-2 text-gray-400 text-xs md:text-sm">
+              You spelled: {spellingAnswer}
+            </p>
+          )}
+        </div>
+        {chatOverlay}
+      </>
     )
   }
 
   // LEADERBOARD phase - show standings
   if (phase === 'LEADERBOARD') {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-purple-600 to-purple-800 p-4 md:p-8 text-white">
-        <h1 className="mb-6 md:mb-8 text-center text-2xl md:text-3xl font-bold">Leaderboard</h1>
-        <div className="mx-auto max-w-md space-y-2 md:space-y-3">
-          {leaderboard.map((player, index) => (
-            <div
-              key={player.playerId}
-              className={`flex items-center justify-between rounded-lg p-3 md:p-4 ${
-                player.playerId === playerId
-                  ? 'bg-white text-purple-900'
-                  : 'bg-purple-700'
-              }`}
-            >
-              <div className="flex items-center gap-2 md:gap-3">
-                <span className="text-xl md:text-2xl font-bold">#{index + 1}</span>
-                <span className="font-medium text-sm md:text-base">{player.nickname}</span>
+      <>
+        <div className="min-h-screen bg-gradient-to-b from-purple-600 to-purple-800 p-4 md:p-8 text-white">
+          <h1 className="mb-6 md:mb-8 text-center text-2xl md:text-3xl font-bold">Leaderboard</h1>
+          <div className="mx-auto max-w-md space-y-2 md:space-y-3">
+            {leaderboard.map((player, index) => (
+              <div
+                key={player.playerId}
+                className={`flex items-center justify-between rounded-lg p-3 md:p-4 ${
+                  player.playerId === playerId
+                    ? 'bg-white text-purple-900'
+                    : 'bg-purple-700'
+                }`}
+              >
+                <div className="flex items-center gap-2 md:gap-3">
+                  <span className="text-xl md:text-2xl font-bold">#{index + 1}</span>
+                  <span className="font-medium text-sm md:text-base">{player.nickname}</span>
+                </div>
+                <span className="text-lg md:text-xl font-bold">{player.score}</span>
               </div>
-              <span className="text-lg md:text-xl font-bold">{player.score}</span>
-            </div>
-          ))}
+            ))}
+          </div>
+          <p className="mt-6 md:mt-8 text-center text-purple-200 text-sm md:text-base">
+            Waiting for next question...
+          </p>
         </div>
-        <p className="mt-6 md:mt-8 text-center text-purple-200 text-sm md:text-base">
-          Waiting for next question...
-        </p>
-      </div>
+        {chatOverlay}
+      </>
     )
   }
 
@@ -488,6 +540,7 @@ export default function PlayPage({ params }: PlayPageProps) {
     const isWinner = myRank === 1
 
     return (
+      <>
       <div className="min-h-screen bg-gradient-to-b from-yellow-500 to-orange-500 p-4 md:p-8 text-white">
         <div className="mb-6 md:mb-8 text-center">
           <div className="text-6xl md:text-8xl">{isWinner ? '🏆' : '🎉'}</div>
@@ -548,6 +601,8 @@ export default function PlayPage({ params }: PlayPageProps) {
           </Button>
         </div>
       </div>
+      {chatOverlay}
+      </>
     )
   }
 
@@ -556,5 +611,31 @@ export default function PlayPage({ params }: PlayPageProps) {
     <div className="flex min-h-screen items-center justify-center">
       <p>Loading...</p>
     </div>
+  )
+}
+
+/**
+ * Wrapper that renders GameChat overlay on all game phases.
+ * Extracted as a separate component so it doesn't remount on phase changes.
+ */
+function GameChatOverlay({
+  sessionId,
+  playerId,
+  userId,
+  nickname,
+}: {
+  sessionId: string
+  playerId: string | null
+  userId: string | null
+  nickname: string
+}) {
+  if (!playerId || !userId || !nickname) return null
+  return (
+    <GameChat
+      sessionId={sessionId}
+      playerId={playerId}
+      userId={userId}
+      playerNickname={nickname}
+    />
   )
 }
