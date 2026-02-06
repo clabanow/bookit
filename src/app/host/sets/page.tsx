@@ -40,15 +40,15 @@ export default async function QuestionSetsPage() {
   const sets = await getQuestionSets()
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="mx-auto max-w-3xl">
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Question Sets</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Question Sets</h1>
             <p className="mt-1 text-gray-500">Create and manage your quiz questions</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <ImportQuestionSet />
             <Link href="/host/sets/generate">
               <Button variant="outline">AI Generate</Button>

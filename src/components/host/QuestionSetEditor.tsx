@@ -2,11 +2,9 @@
  * Question Set Editor Component
  *
  * A form for creating or editing a question set.
- * Each question has:
- * - prompt: The question text
- * - options: 4 answer choices
- * - correctIndex: Which option is correct (0-3)
- * - timeLimitSec: How long players have to answer
+ * Supports two question types:
+ * - Multiple Choice: prompt, 4 options, correct answer, time limit
+ * - Spelling: prompt (clue/definition), answer (word to spell), optional hint
  *
  * This is a "client component" because it uses React state and event handlers.
  * In Next.js App Router, components that use useState, onClick, etc. must be
@@ -21,15 +19,22 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { speakWord, isSpeechSupported } from '@/lib/audio/textToSpeech'
 
 /**
- * Shape of a single question in the editor
+ * Shape of a single question in the editor.
+ * questionType determines which fields are relevant:
+ * - MULTIPLE_CHOICE uses options + correctIndex
+ * - SPELLING uses answer + hint
  */
 interface QuestionData {
   id?: string // Only present for existing questions
+  questionType: 'MULTIPLE_CHOICE' | 'SPELLING'
   prompt: string
   options: [string, string, string, string]
   correctIndex: number
+  answer: string
+  hint: string
   timeLimitSec: number
 }
 
@@ -46,14 +51,18 @@ interface QuestionSetEditorProps {
 }
 
 /**
- * Creates a blank question with default values
+ * Creates a blank question with default values.
+ * Spelling questions default to 30s because typing takes longer than clicking.
  */
-function createEmptyQuestion(): QuestionData {
+function createEmptyQuestion(type: 'MULTIPLE_CHOICE' | 'SPELLING' = 'MULTIPLE_CHOICE'): QuestionData {
   return {
+    questionType: type,
     prompt: '',
     options: ['', '', '', ''],
     correctIndex: 0,
-    timeLimitSec: 20,
+    answer: '',
+    hint: '',
+    timeLimitSec: type === 'SPELLING' ? 30 : 20,
   }
 }
 
@@ -96,8 +105,8 @@ export function QuestionSetEditor({ initialData }: QuestionSetEditorProps) {
   /**
    * Add a new blank question at the end
    */
-  const addQuestion = () => {
-    setQuestions((prev) => [...prev, createEmptyQuestion()])
+  const addQuestion = (type: 'MULTIPLE_CHOICE' | 'SPELLING' = 'MULTIPLE_CHOICE') => {
+    setQuestions((prev) => [...prev, createEmptyQuestion(type)])
   }
 
   /**
@@ -110,7 +119,9 @@ export function QuestionSetEditor({ initialData }: QuestionSetEditorProps) {
   }
 
   /**
-   * Validate the form before saving
+   * Validate the form before saving.
+   * MC questions require all 4 options filled in.
+   * Spelling questions require an answer word.
    */
   const validate = (): string | null => {
     if (!title.trim()) {
@@ -124,9 +135,16 @@ export function QuestionSetEditor({ initialData }: QuestionSetEditorProps) {
       if (!q.prompt.trim()) {
         return `Question ${i + 1}: Please enter the question text`
       }
-      for (let j = 0; j < 4; j++) {
-        if (!q.options[j].trim()) {
-          return `Question ${i + 1}: Please fill in all 4 options`
+      if (q.questionType === 'MULTIPLE_CHOICE') {
+        for (let j = 0; j < 4; j++) {
+          if (!q.options[j].trim()) {
+            return `Question ${i + 1}: Please fill in all 4 options`
+          }
+        }
+      } else {
+        // SPELLING
+        if (!q.answer.trim()) {
+          return `Question ${i + 1}: Please enter the answer word`
         }
       }
     }
@@ -134,7 +152,8 @@ export function QuestionSetEditor({ initialData }: QuestionSetEditorProps) {
   }
 
   /**
-   * Save the question set to the API
+   * Save the question set to the API.
+   * Includes questionType, answer, and hint for spelling support.
    */
   const handleSave = async () => {
     const validationError = validate()
@@ -150,9 +169,12 @@ export function QuestionSetEditor({ initialData }: QuestionSetEditorProps) {
       const payload = {
         title: title.trim(),
         questions: questions.map((q) => ({
+          questionType: q.questionType,
           prompt: q.prompt.trim(),
-          options: q.options.map((o) => o.trim()),
-          correctIndex: q.correctIndex,
+          options: q.questionType === 'MULTIPLE_CHOICE' ? q.options.map((o) => o.trim()) : [],
+          correctIndex: q.questionType === 'MULTIPLE_CHOICE' ? q.correctIndex : 0,
+          answer: q.questionType === 'SPELLING' ? q.answer.trim() : null,
+          hint: q.questionType === 'SPELLING' && q.hint.trim() ? q.hint.trim() : null,
           timeLimitSec: q.timeLimitSec,
         })),
       }
@@ -182,6 +204,18 @@ export function QuestionSetEditor({ initialData }: QuestionSetEditorProps) {
     }
   }
 
+  /**
+   * Preview pronunciation using Web Speech API
+   */
+  const handlePreview = async (word: string) => {
+    if (!word.trim()) return
+    try {
+      await speakWord(word.trim())
+    } catch {
+      // Speech not supported or failed — not critical
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Title input */}
@@ -192,7 +226,7 @@ export function QuestionSetEditor({ initialData }: QuestionSetEditorProps) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="e.g., World Geography Quiz"
-          className="max-w-md"
+          className="w-full md:max-w-md"
         />
       </div>
 
@@ -203,8 +237,19 @@ export function QuestionSetEditor({ initialData }: QuestionSetEditorProps) {
         {questions.map((question, qIndex) => (
           <Card key={qIndex}>
             <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">Question {qIndex + 1}</CardTitle>
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-base">Question {qIndex + 1}</CardTitle>
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                      question.questionType === 'SPELLING'
+                        ? 'bg-purple-100 text-purple-700'
+                        : 'bg-blue-100 text-blue-700'
+                    }`}
+                  >
+                    {question.questionType === 'SPELLING' ? 'Spelling' : 'Multiple Choice'}
+                  </span>
+                </div>
                 {questions.length > 1 && (
                   <Button
                     variant="outline"
@@ -219,46 +264,92 @@ export function QuestionSetEditor({ initialData }: QuestionSetEditorProps) {
             <CardContent className="space-y-4">
               {/* Question prompt */}
               <div className="space-y-2">
-                <Label htmlFor={`prompt-${qIndex}`}>Question</Label>
+                <Label htmlFor={`prompt-${qIndex}`}>
+                  {question.questionType === 'SPELLING' ? 'Clue / Definition' : 'Question'}
+                </Label>
                 <Input
                   id={`prompt-${qIndex}`}
                   value={question.prompt}
                   onChange={(e) => updateQuestion(qIndex, { prompt: e.target.value })}
-                  placeholder="What is the capital of France?"
+                  placeholder={
+                    question.questionType === 'SPELLING'
+                      ? 'A large animal with a trunk'
+                      : 'What is the capital of France?'
+                  }
                 />
               </div>
 
-              {/* Options */}
-              <div className="space-y-2">
-                <Label>Answer Options</Label>
-                <div className="grid gap-2">
-                  {question.options.map((option, oIndex) => (
-                    <div key={oIndex} className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name={`correct-${qIndex}`}
-                        checked={question.correctIndex === oIndex}
-                        onChange={() => updateQuestion(qIndex, { correctIndex: oIndex })}
-                        className="h-4 w-4"
-                      />
+              {/* Conditional: MC options or Spelling answer */}
+              {question.questionType === 'MULTIPLE_CHOICE' ? (
+                /* Multiple Choice: Options with radio buttons */
+                <div className="space-y-2">
+                  <Label>Answer Options</Label>
+                  <div className="grid gap-2">
+                    {question.options.map((option, oIndex) => (
+                      <div key={oIndex} className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name={`correct-${qIndex}`}
+                          checked={question.correctIndex === oIndex}
+                          onChange={() => updateQuestion(qIndex, { correctIndex: oIndex })}
+                          className="h-4 w-4"
+                        />
+                        <Input
+                          value={option}
+                          onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
+                          placeholder={`Option ${oIndex + 1}`}
+                          className="flex-1"
+                        />
+                        {question.correctIndex === oIndex && (
+                          <span className="text-xs text-green-600 font-medium">
+                            Correct
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    Select the radio button next to the correct answer
+                  </p>
+                </div>
+              ) : (
+                /* Spelling: Answer word + optional hint + pronunciation preview */
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor={`answer-${qIndex}`}>Answer (word to spell)</Label>
+                    <div className="flex gap-2">
                       <Input
-                        value={option}
-                        onChange={(e) => updateOption(qIndex, oIndex, e.target.value)}
-                        placeholder={`Option ${oIndex + 1}`}
+                        id={`answer-${qIndex}`}
+                        value={question.answer}
+                        onChange={(e) => updateQuestion(qIndex, { answer: e.target.value })}
+                        placeholder="elephant"
                         className="flex-1"
                       />
-                      {question.correctIndex === oIndex && (
-                        <span className="text-xs text-green-600 font-medium">
-                          Correct
-                        </span>
+                      {isSpeechSupported() && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePreview(question.answer)}
+                          disabled={!question.answer.trim()}
+                          title="Preview pronunciation"
+                        >
+                          Preview
+                        </Button>
                       )}
                     </div>
-                  ))}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`hint-${qIndex}`}>Hint (optional)</Label>
+                    <Input
+                      id={`hint-${qIndex}`}
+                      value={question.hint}
+                      onChange={(e) => updateQuestion(qIndex, { hint: e.target.value })}
+                      placeholder="Starts with 'E', 8 letters"
+                    />
+                  </div>
                 </div>
-                <p className="text-xs text-gray-500">
-                  Select the radio button next to the correct answer
-                </p>
-              </div>
+              )}
 
               {/* Time limit */}
               <div className="space-y-2">
@@ -279,9 +370,15 @@ export function QuestionSetEditor({ initialData }: QuestionSetEditorProps) {
           </Card>
         ))}
 
-        <Button variant="outline" onClick={addQuestion}>
-          + Add Question
-        </Button>
+        {/* Two buttons: one for each question type */}
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={() => addQuestion('MULTIPLE_CHOICE')}>
+            + Multiple Choice
+          </Button>
+          <Button variant="outline" onClick={() => addQuestion('SPELLING')}>
+            + Spelling
+          </Button>
+        </div>
       </div>
 
       {/* Error message */}
@@ -290,7 +387,7 @@ export function QuestionSetEditor({ initialData }: QuestionSetEditorProps) {
       )}
 
       {/* Action buttons */}
-      <div className="flex gap-3">
+      <div className="flex gap-3 flex-wrap">
         <Button onClick={handleSave} disabled={saving}>
           {saving ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Question Set'}
         </Button>

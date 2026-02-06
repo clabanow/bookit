@@ -109,23 +109,37 @@ export async function PUT(request: Request, { params }: RouteParams) {
       }
 
       for (const q of body.questions) {
-        if (!q.prompt || !q.options || q.correctIndex === undefined) {
+        if (!q.prompt) {
           return NextResponse.json(
-            { error: 'Each question needs prompt, options, and correctIndex' },
+            { error: 'Each question needs a prompt' },
             { status: 400 }
           )
         }
-        if (!Array.isArray(q.options) || q.options.length !== 4) {
-          return NextResponse.json(
-            { error: 'Each question must have exactly 4 options' },
-            { status: 400 }
-          )
-        }
-        if (q.correctIndex < 0 || q.correctIndex > 3) {
-          return NextResponse.json(
-            { error: 'correctIndex must be 0-3' },
-            { status: 400 }
-          )
+
+        const qType = q.questionType ?? 'MULTIPLE_CHOICE'
+
+        if (qType === 'MULTIPLE_CHOICE') {
+          // MC questions need 4 options and a valid correctIndex
+          if (!q.options || !Array.isArray(q.options) || q.options.length !== 4) {
+            return NextResponse.json(
+              { error: 'Multiple choice questions must have exactly 4 options' },
+              { status: 400 }
+            )
+          }
+          if (q.correctIndex === undefined || q.correctIndex < 0 || q.correctIndex > 3) {
+            return NextResponse.json(
+              { error: 'correctIndex must be 0-3 for multiple choice questions' },
+              { status: 400 }
+            )
+          }
+        } else if (qType === 'SPELLING') {
+          // Spelling questions need an answer word
+          if (!q.answer || typeof q.answer !== 'string' || !q.answer.trim()) {
+            return NextResponse.json(
+              { error: 'Spelling questions must have an answer word' },
+              { status: 400 }
+            )
+          }
         }
       }
     }
@@ -154,17 +168,23 @@ export async function PUT(request: Request, { params }: RouteParams) {
               (
                 q: {
                   prompt: string
-                  options: string[]
-                  correctIndex: number
+                  questionType?: 'MULTIPLE_CHOICE' | 'SPELLING'
+                  options?: string[]
+                  correctIndex?: number
+                  answer?: string
+                  hint?: string
                   timeLimitSec?: number
                 },
                 index: number
               ) => ({
                 setId: id,
                 prompt: q.prompt,
-                options: q.options,
-                correctIndex: q.correctIndex,
-                timeLimitSec: q.timeLimitSec ?? 20,
+                questionType: q.questionType ?? 'MULTIPLE_CHOICE',
+                options: q.options ?? [],
+                correctIndex: q.correctIndex ?? 0,
+                answer: q.answer ?? null,
+                hint: q.hint ?? null,
+                timeLimitSec: q.timeLimitSec ?? (q.questionType === 'SPELLING' ? 30 : 20),
                 order: index,
               })
             ),

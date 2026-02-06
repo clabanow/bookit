@@ -55,11 +55,11 @@ export function SpellingInput({ wordLength, onSubmit, disabled = false, timeLeft
 
       {/* Letter count hint */}
       <div className="text-center mb-4">
-        <div className="flex justify-center gap-1">
+        <div className="flex justify-center gap-0.5 sm:gap-1 flex-wrap">
           {Array.from({ length: wordLength }).map((_, i) => (
             <div
               key={i}
-              className={`w-6 h-8 border-b-2 ${
+              className={`w-5 h-7 sm:w-6 sm:h-8 border-b-2 ${
                 i < answer.length ? 'border-blue-500' : 'border-slate-600'
               }`}
             >

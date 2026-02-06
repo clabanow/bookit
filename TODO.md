@@ -297,7 +297,9 @@ This is the single source of truth for all development tasks. Work items are ord
 - **Completed**: Kick player feature (host can remove players from lobby)
 - **Remaining**: Mute, ban, report features
 ### [ ] M6.8: Analytics dashboard
-### [ ] M6.9: Mobile-responsive polish
+### [x] M6.9: Mobile-responsive polish
+- **Files**: Sets page, editor, SpellingInput, SocketStatus, QuestionSetList, generate page, new/edit pages
+- **Changes**: Responsive padding (p-4 md:p-8), flex-wrap buttons, smaller mobile letter boxes, opacity on socket status
 ### [~] M6.10: Accessibility audit (partial)
 - **Completed**: Added ARIA roles, labels, live regions for dynamic content
 - **Remaining**: Full audit with screen reader testing, focus management review
@@ -394,12 +396,12 @@ This is the single source of truth for all development tasks. Work items are ord
 - **Manual Verification**: Full flow from image to saved question set ✓
 - **Note**: Requires ANTHROPIC_API_KEY environment variable
 
-### [ ] M8.5: Add content type detection
-- **Acceptance Criteria**: AI detects if content is vocab, math, history, etc. and adjusts question format
-- **Files**: src/lib/ai/contentDetector.ts
-- **Tests**: Unit tests for classification
-- **Manual Verification**: Upload different content types, verify correct detection
-- **Note**: Content type is already detected during extraction in M8.2
+### [x] M8.5: Add content type detection UI
+- **Acceptance Criteria**: UI shows detected content type, allows override and re-generation
+- **Files**: src/app/host/sets/generate/page.tsx
+- **Tests**: None (UI)
+- **Manual Verification**: Upload content, see type badge, override and re-generate ✓
+- **Note**: Backend detection already existed in M8.2; this adds the UI layer
 
 ---
 
@@ -436,23 +438,165 @@ This is the single source of truth for all development tasks. Work items are ord
 - **Tests**: Updated player types ✓
 - **Manual Verification**: Game flow supports both question types ✓
 
-### [ ] M9.6: Create spelling question set editor
-- **Acceptance Criteria**: Add words with optional hints; preview pronunciation
-- **Files**: src/components/host/SpellingEditor.tsx
+### [x] M9.6: Create spelling question set editor
+- **Acceptance Criteria**: Editor supports mixed MC + spelling questions; preview pronunciation
+- **Files**: src/components/host/QuestionSetEditor.tsx, src/app/host/sets/[id]/edit/page.tsx, src/app/api/question-sets/[id]/route.ts
 - **Tests**: None (UI)
-- **Manual Verification**: Create spelling set, play it
-- **Note**: Can also use AI generation with spelling mode
+- **Manual Verification**: Create mixed set, save, edit, verify round-trip ✓
+- **Note**: Integrated into existing editor rather than creating separate component
+
+---
+
+## M10 — Chat Forum (Global + In-Game)
+
+### [ ] M10.1: Design chat data model
+- **Acceptance Criteria**: Prisma models for ChatMessage (userId, playerId, content, timestamp, channelId) and Channel (type: GLOBAL/GAME_ROOM)
+- **Files**: prisma/schema.prisma
+- **Tests**: None
+- **Manual Verification**: Migration runs
+
+### [ ] M10.2: Create chat API routes
+- **Acceptance Criteria**: POST/GET messages with pagination, channel listing
+- **Files**: src/app/api/chat/route.ts, src/app/api/chat/channels/route.ts
+- **Tests**: API route tests
+- **Manual Verification**: curl CRUD operations
+
+### [ ] M10.3: Build global chat UI
+- **Acceptance Criteria**: Accessible from nav, message list, input, auto-scroll
+- **Files**: src/components/chat/ChatPanel.tsx, src/app/chat/page.tsx
+- **Tests**: None (UI)
+- **Manual Verification**: Send messages, see them appear
+
+### [ ] M10.4: Add real-time chat via Socket.IO
+- **Acceptance Criteria**: Live message updates, join/leave channels
+- **Files**: src/lib/realtime/handlers/chat.ts
+- **Tests**: Integration test for live messages
+- **Manual Verification**: Two browsers, messages appear instantly
+
+### [ ] M10.5: Build in-game room chat
+- **Acceptance Criteria**: Chat panel in lobby and during gameplay
+- **Files**: src/components/chat/GameChat.tsx
+- **Tests**: None (UI)
+- **Manual Verification**: Chat during game
+
+### [ ] M10.6: Chat moderation
+- **Acceptance Criteria**: Profanity filter reuse, message reporting
+- **Files**: src/lib/chat/moderation.ts
+- **Tests**: Unit tests for chat filtering
+- **Manual Verification**: Blocked words rejected
+
+---
+
+## M11 — Gold Coins & Trading Cards
+
+### [ ] M11.1: Add gold coins to Player model
+- **Acceptance Criteria**: Player has `coins Int @default(0)` field
+- **Files**: prisma/schema.prisma
+- **Tests**: None
+- **Manual Verification**: Migration runs
+
+### [ ] M11.2: Design trading card system
+- **Acceptance Criteria**: Card model with name, image, description, rarity (COMMON/UNCOMMON/RARE/LEGENDARY), stats, coinCost
+- **Files**: prisma/schema.prisma
+- **Tests**: None
+- **Manual Verification**: Migration runs
+
+### [ ] M11.3: Award coins for gameplay
+- **Acceptance Criteria**: Correct answers earn coins, bonus for streaks and winning
+- **Files**: src/lib/scoring/coins.ts
+- **Tests**: Unit tests for coin awards
+- **Manual Verification**: Play game, see coins earned
+
+### [ ] M11.4: Create card collection model
+- **Acceptance Criteria**: PlayerCard join table tracking which cards a player owns
+- **Files**: prisma/schema.prisma
+- **Tests**: None
+- **Manual Verification**: Migration runs
+
+### [ ] M11.5: Seed initial card catalog
+- **Acceptance Criteria**: ~20-30 cards across rarities with coin prices
+- **Files**: prisma/seed-cards.ts
+- **Tests**: None
+- **Manual Verification**: Cards appear in DB
+
+### [ ] M11.6: Build card shop UI
+- **Acceptance Criteria**: Browse cards by rarity, purchase with coins, show owned/locked
+- **Files**: src/app/shop/page.tsx
+- **Tests**: None (UI)
+- **Manual Verification**: Buy a card, see coins deducted
+
+### [ ] M11.7: Build player collection UI
+- **Acceptance Criteria**: View owned cards, stats, completion percentage
+- **Files**: src/app/account/collection/page.tsx
+- **Tests**: None (UI)
+- **Manual Verification**: See collection after buying cards
+
+---
+
+## M12 — Daily Spin Wheel
+
+### [ ] M12.1: Add daily spin tracking to Player model
+- **Acceptance Criteria**: lastSpinDate field on Player
+- **Files**: prisma/schema.prisma
+- **Tests**: None
+- **Manual Verification**: Migration runs
+
+### [ ] M12.2: Implement spin wheel logic
+- **Acceptance Criteria**: Weighted random prizes (coin amounts)
+- **Files**: src/lib/rewards/spinWheel.ts
+- **Tests**: Unit tests for weighted random
+- **Manual Verification**: Multiple spins return valid prizes
+
+### [ ] M12.3: Build spin wheel UI
+- **Acceptance Criteria**: Animated wheel, prize reveal
+- **Files**: src/components/rewards/SpinWheel.tsx, src/app/spin/page.tsx
+- **Tests**: None (UI)
+- **Manual Verification**: Wheel spins, prize shows
+
+### [ ] M12.4: Add one-spin-per-day enforcement
+- **Acceptance Criteria**: Second spin in same day is rejected
+- **Files**: src/app/api/spin/route.ts
+- **Tests**: Unit tests for daily limit
+- **Manual Verification**: Spin once, try again, get denied
+
+---
+
+## M13 — Usage Limits (Cost Control)
+
+### [ ] M13.1: Add daily gameplay limits
+- **Acceptance Criteria**: Max games per user per day (configurable)
+- **Files**: src/lib/limits/gameplay.ts
+- **Tests**: Unit tests for limit enforcement
+- **Manual Verification**: Hit limit, get blocked
+
+### [ ] M13.2: Add AI generation limits
+- **Acceptance Criteria**: Max AI question generations per user per day
+- **Files**: src/lib/limits/aiGeneration.ts
+- **Tests**: Unit tests for limit enforcement
+- **Manual Verification**: Hit limit, get blocked
+
+### [ ] M13.3: Build usage tracking
+- **Acceptance Criteria**: Count games played, AI calls made today
+- **Files**: prisma/schema.prisma (UsageLog model), src/lib/limits/tracker.ts
+- **Tests**: Unit tests for counting
+- **Manual Verification**: Play games, see count increment
+
+### [ ] M13.4: Show remaining uses in UI
+- **Acceptance Criteria**: Display remaining games/generations in UI
+- **Files**: src/components/usage/UsageBadge.tsx
+- **Tests**: None (UI)
+- **Manual Verification**: See remaining count decrease
 
 ---
 
 ## Current Status
 
-**Current Task**: M8 & M9 COMPLETE! Minor polish tasks remaining.
-**Next Up**: Add ANTHROPIC_API_KEY to Railway for AI features
+**Current Task**: M9.6, M8.5, M6.9 COMPLETE! AI switched to Haiku for cost savings.
+**Next Up**: M10 (Chat Forum), M11 (Gold Coins), M12 (Spin Wheel), M13 (Usage Limits)
 
 **Production URL**: https://bookit-production-5539.up.railway.app
 
-**Last Updated**: 2026-02-01
+**Last Updated**: 2026-02-06
 
 ### Completed Milestones:
 - **M0**: Project Bootstrap ✓
@@ -462,14 +606,16 @@ This is the single source of truth for all development tasks. Work items are ord
 - **M4**: Resilience & Correctness ✓
 - **M5**: Deployment (Railway) ✓
 - **M7**: User Authentication ✓
-- **M8**: AI Question Generation ✓ (needs API key)
+- **M8**: AI Question Generation ✓ (switched to Haiku for cost savings)
 - **M9**: Spelling Mode ✓
-- **M5**: Deployment (Railway) ✓
 
 ### In Progress:
-- **M6**: Post-MVP features (partial)
-- **M7**: User Authentication & Accounts ✓ COMPLETE
-- **M8**: AI Question Set Generation
-- **M9**: Spelling Mode
+- **M6**: Post-MVP features (partial — M6.9 mobile polish done)
+
+### Backlog:
+- **M10**: Chat Forum (Global + In-Game)
+- **M11**: Gold Coins & Trading Cards
+- **M12**: Daily Spin Wheel
+- **M13**: Usage Limits (Cost Control)
 
 **Tests**: 245 passing

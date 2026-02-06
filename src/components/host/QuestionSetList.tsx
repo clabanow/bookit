@@ -66,7 +66,7 @@ export function QuestionSetList({ sets, onSelect, selectable = false }: Question
       {sets.map((set) => (
         <div
           key={set.id}
-          className={`flex items-center justify-between rounded-lg border bg-white p-4 shadow-sm transition-shadow hover:shadow-md ${
+          className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-lg border bg-white p-4 shadow-sm transition-shadow hover:shadow-md ${
             selectable ? 'cursor-pointer' : ''
           }`}
           onClick={selectable ? () => onSelect?.(set.id) : undefined}

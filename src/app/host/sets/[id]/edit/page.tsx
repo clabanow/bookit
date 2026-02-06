@@ -36,15 +36,22 @@ async function getQuestionSet(id: string) {
 
   if (!set) return null
 
-  // Transform to the shape the editor expects
+  // Transform to the shape the editor expects.
+  // For spelling questions, options may be empty so we fallback to placeholder values
+  // since the QuestionData type expects a 4-tuple (the editor won't display them).
   return {
     id: set.id,
     title: set.title,
     questions: set.questions.map((q) => ({
       id: q.id,
+      questionType: (q.questionType as 'MULTIPLE_CHOICE' | 'SPELLING') ?? 'MULTIPLE_CHOICE',
       prompt: q.prompt,
-      options: q.options as [string, string, string, string],
+      options: (q.options && (q.options as string[]).length === 4
+        ? q.options
+        : ['', '', '', '']) as [string, string, string, string],
       correctIndex: q.correctIndex,
+      answer: (q.answer as string) ?? '',
+      hint: (q.hint as string) ?? '',
       timeLimitSec: q.timeLimitSec,
     })),
   }
@@ -60,11 +67,11 @@ export default async function EditQuestionSetPage({ params }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="mx-auto max-w-3xl">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Edit Question Set</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Edit Question Set</h1>
           <p className="mt-1 text-gray-500">Update your quiz questions</p>
         </div>
 

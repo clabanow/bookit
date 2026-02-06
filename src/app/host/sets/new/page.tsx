@@ -10,11 +10,11 @@ import { QuestionSetEditor } from '@/components/host/QuestionSetEditor'
 
 export default function NewQuestionSetPage() {
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="mx-auto max-w-3xl">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Create Question Set</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Create Question Set</h1>
           <p className="mt-1 text-gray-500">Build a new quiz for your players</p>
         </div>
 

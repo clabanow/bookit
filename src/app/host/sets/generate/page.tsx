@@ -8,9 +8,10 @@
  * Flow:
  * 1. Upload image or paste text
  * 2. Choose question type (multiple choice, spelling, or mixed)
- * 3. AI extracts content and generates questions
- * 4. Review and edit questions
- * 5. Save as a new question set
+ * 3. Optionally pick a content type (for text mode)
+ * 4. AI extracts content and generates questions
+ * 5. Review and edit questions — see detected content type
+ * 6. Save as a new question set
  */
 
 import { useState } from 'react'
@@ -29,7 +30,17 @@ interface GeneratedQuestion {
   hint?: string
 }
 
+type ContentType = 'vocabulary' | 'math' | 'history' | 'science' | 'general'
+
 type Step = 'input' | 'generating' | 'review' | 'saving'
+
+const CONTENT_TYPE_LABELS: Record<ContentType, string> = {
+  vocabulary: 'Vocabulary',
+  math: 'Math',
+  history: 'History',
+  science: 'Science',
+  general: 'General',
+}
 
 export default function GenerateQuestionsPage() {
   const router = useRouter()
@@ -42,10 +53,12 @@ export default function GenerateQuestionsPage() {
   const [imageType, setImageType] = useState<string>('')
   const [textInput, setTextInput] = useState('')
   const [questionType, setQuestionType] = useState<'MULTIPLE_CHOICE' | 'SPELLING' | 'MIXED'>('MULTIPLE_CHOICE')
+  const [contentType, setContentType] = useState<ContentType>('general')
 
   // Generated state
   const [questions, setQuestions] = useState<GeneratedQuestion[]>([])
   const [setTitle, setSetTitle] = useState('')
+  const [detectedContentType, setDetectedContentType] = useState<ContentType | null>(null)
 
   function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -96,6 +109,7 @@ export default function GenerateQuestionsPage() {
         }
       } else if (inputMode === 'text' && textInput) {
         body.text = textInput
+        body.contentType = contentType
       } else {
         throw new Error('Please provide an image or text')
       }
@@ -113,10 +127,61 @@ export default function GenerateQuestionsPage() {
       }
 
       setQuestions(data.questions)
+
+      // Capture detected content type from the API response
+      if (data.extractedContent?.contentType) {
+        setDetectedContentType(data.extractedContent.contentType as ContentType)
+      }
+
       setStep('review')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Generation failed')
       setStep('input')
+    }
+  }
+
+  /**
+   * Re-generate questions with a different content type override.
+   * Keeps the same input but sends the overridden content type.
+   */
+  async function handleRegenerate(overrideType: ContentType) {
+    setDetectedContentType(overrideType)
+    setError('')
+    setStep('generating')
+
+    try {
+      const body: Record<string, unknown> = {
+        questionType,
+        difficulty: 'medium',
+        contentType: overrideType,
+      }
+
+      if (inputMode === 'image' && imageData) {
+        body.image = {
+          data: imageData,
+          mediaType: imageType,
+        }
+      } else if (inputMode === 'text' && textInput) {
+        body.text = textInput
+      }
+
+      const res = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Re-generation failed')
+      }
+
+      setQuestions(data.questions)
+      setStep('review')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Re-generation failed')
+      setStep('review')
     }
   }
 
@@ -251,21 +316,43 @@ export default function GenerateQuestionsPage() {
                   </label>
                 </div>
               ) : (
-                <div>
-                  <Label htmlFor="text-content">Content</Label>
-                  <textarea
-                    id="text-content"
-                    className="w-full h-48 p-3 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
-                    placeholder="Enter vocabulary words (one per line), facts, definitions, etc."
-                    value={textInput}
-                    onChange={(e) => setTextInput(e.target.value)}
-                  />
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="text-content">Content</Label>
+                    <textarea
+                      id="text-content"
+                      className="w-full h-48 p-3 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
+                      placeholder="Enter vocabulary words (one per line), facts, definitions, etc."
+                      value={textInput}
+                      onChange={(e) => setTextInput(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Content type selector — only shown for text input */}
+                  <div>
+                    <Label htmlFor="content-type">Content Type</Label>
+                    <select
+                      id="content-type"
+                      value={contentType}
+                      onChange={(e) => setContentType(e.target.value as ContentType)}
+                      className="w-full mt-1 px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white focus:border-blue-500 focus:outline-none"
+                    >
+                      {Object.entries(CONTENT_TYPE_LABELS).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Helps AI generate better questions for this content
+                    </p>
+                  </div>
                 </div>
               )}
 
               <div>
                 <Label>Question Type</Label>
-                <div className="flex gap-2 mt-2">
+                <div className="flex gap-2 mt-2 flex-wrap">
                   {(['MULTIPLE_CHOICE', 'SPELLING', 'MIXED'] as const).map((type) => (
                     <Button
                       key={type}
@@ -330,6 +417,36 @@ export default function GenerateQuestionsPage() {
             <div className="bg-red-500/10 text-red-400 border border-red-500/20 p-3 rounded-md">
               {error}
             </div>
+          )}
+
+          {/* Detected content type + override */}
+          {detectedContentType && (
+            <Card>
+              <CardContent className="pt-4">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-slate-400">Content Type:</span>
+                    <span className="text-xs px-2 py-1 rounded-full bg-blue-500/20 text-blue-400 font-medium">
+                      {CONTENT_TYPE_LABELS[detectedContentType]}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={detectedContentType}
+                      onChange={(e) => handleRegenerate(e.target.value as ContentType)}
+                      className="text-sm px-2 py-1 rounded bg-slate-800 border border-slate-700 text-white"
+                    >
+                      {Object.entries(CONTENT_TYPE_LABELS).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="text-xs text-slate-500">Override &amp; re-generate</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           )}
 
           {/* Title input */}
