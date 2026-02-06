@@ -93,6 +93,12 @@ export interface Player {
 
   /** Timestamp when the answer was submitted (for speed bonus) */
   lastAnswerTime: number | null
+
+  /** Coins accumulated during this game session (persisted to DB at game end) */
+  coinsEarned: number
+
+  /** Current streak of consecutive correct answers (resets on wrong answer) */
+  streak: number
 }
 
 /**

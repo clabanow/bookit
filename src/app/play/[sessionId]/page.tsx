@@ -82,6 +82,7 @@ export default function PlayPage({ params }: PlayPageProps) {
   const [error, setError] = useState<string | null>(null)
   const [myResult, setMyResult] = useState<{ isCorrect: boolean; points: number } | null>(null)
   const [timeLeft, setTimeLeft] = useState<number>(0)
+  const [coinResult, setCoinResult] = useState<{ coinsEarned: number; isRepeatPlay: boolean } | null>(null)
 
   // Timer for questions
   useEffect(() => {
@@ -235,10 +236,24 @@ export default function PlayPage({ params }: PlayPageProps) {
     })
 
     // Game ended
-    socket.on('game:end', (data) => {
+    socket.on('game:end', (data: Record<string, unknown>) => {
       console.log('Game ended:', data)
       setPhase('END')
-      setLeaderboard(data.finalStandings)
+      setLeaderboard(data.finalStandings as LeaderboardEntry[])
+
+      // Extract coin result for this player
+      const coinResults = data.coinResults as
+        | Array<{ playerId: string; coinsEarned: number; isRepeatPlay: boolean }>
+        | undefined
+      if (coinResults && playerId) {
+        const myCoinResult = coinResults.find((r) => r.playerId === playerId)
+        if (myCoinResult) {
+          setCoinResult({
+            coinsEarned: myCoinResult.coinsEarned,
+            isRepeatPlay: myCoinResult.isRepeatPlay,
+          })
+        }
+      }
     })
 
     // Error handling
@@ -480,11 +495,27 @@ export default function PlayPage({ params }: PlayPageProps) {
         </div>
 
         {isWinner ? (
-          <p className="mb-6 md:mb-8 text-center text-xl md:text-2xl">You won!</p>
+          <p className="mb-4 text-center text-xl md:text-2xl">You won!</p>
         ) : (
-          <p className="mb-6 md:mb-8 text-center text-lg md:text-2xl">
+          <p className="mb-4 text-center text-lg md:text-2xl">
             {winner?.nickname} wins with {winner?.score} points!
           </p>
+        )}
+
+        {/* Coins earned display */}
+        {coinResult && (
+          <div className="mb-6 md:mb-8 text-center">
+            <div className="inline-block bg-yellow-500/20 border border-yellow-500/30 rounded-lg px-4 py-2">
+              <span className="text-yellow-300 text-lg font-bold">
+                +{coinResult.coinsEarned} coins
+              </span>
+              {coinResult.isRepeatPlay && (
+                <span className="block text-yellow-500/70 text-xs mt-0.5">
+                  (repeat play — 50% coins)
+                </span>
+              )}
+            </div>
+          </div>
         )}
 
         <div className="mx-auto max-w-md space-y-2 md:space-y-3">

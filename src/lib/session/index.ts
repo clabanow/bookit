@@ -88,5 +88,7 @@ export function createPlayer(
     lastAnswerIndex: null,
     lastSpellingAnswer: null,
     lastAnswerTime: null,
+    coinsEarned: 0,
+    streak: 0,
   }
 }

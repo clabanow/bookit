@@ -43,6 +43,7 @@ export async function GET() {
         id: true,
         nickname: true,
         avatar: true,
+        coins: true,
         createdAt: true,
         // Never return pinHash!
       },

@@ -18,6 +18,7 @@ interface Player {
   id: string
   nickname: string
   avatar: string | null
+  coins: number
   createdAt: string
 }
 
@@ -250,28 +251,54 @@ export default function PlayersPage() {
                 {players.map((player) => (
                   <div
                     key={player.id}
-                    className="flex items-center justify-between p-4 bg-slate-800/50 rounded-lg border border-slate-700"
+                    className="p-4 bg-slate-800/50 rounded-lg border border-slate-700"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold">
-                        {player.nickname.charAt(0).toUpperCase()}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold">
+                          {player.nickname.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="font-medium text-white">{player.nickname}</p>
+                          <div className="flex items-center gap-2 text-xs text-slate-400">
+                            <span className="text-yellow-400 font-medium">
+                              {player.coins} coins
+                            </span>
+                            <span>·</span>
+                            <span>
+                              Created {new Date(player.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-white">{player.nickname}</p>
-                        <p className="text-xs text-slate-400">
-                          Created {new Date(player.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-red-400 border-red-500/30 hover:bg-red-500/10"
+                        disabled={deleting === player.id}
+                        onClick={() => handleDelete(player.id)}
+                      >
+                        {deleting === player.id ? '...' : 'Delete'}
+                      </Button>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-red-400 border-red-500/30 hover:bg-red-500/10"
-                      disabled={deleting === player.id}
-                      onClick={() => handleDelete(player.id)}
-                    >
-                      {deleting === player.id ? '...' : 'Delete'}
-                    </Button>
+                    <div className="flex gap-2 mt-3 ml-13">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs h-7"
+                        onClick={() => router.push(`/shop?playerId=${player.id}`)}
+                      >
+                        Shop
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs h-7"
+                        onClick={() => router.push(`/account/collection?playerId=${player.id}`)}
+                      >
+                        Collection
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>

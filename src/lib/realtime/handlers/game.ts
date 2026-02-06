@@ -12,6 +12,7 @@ import type { Server, Socket } from 'socket.io'
 import { getSessionStore } from '@/lib/session'
 import { transition } from '@/lib/stateMachine'
 import { prisma } from '@/lib/db'
+import { calculateCoinsForQuestion, calculateGameEndBonus, getRepeatMultiplier } from '@/lib/scoring/coins'
 
 /** How long the countdown lasts before each question (ms) */
 const COUNTDOWN_DURATION_MS = 3000
@@ -251,6 +252,7 @@ export async function endQuestion(
     isCorrect: boolean
     points: number
     totalScore: number
+    coinsForQuestion: number
   }> = []
 
   for (const player of players) {
@@ -285,10 +287,19 @@ export async function endQuestion(
           : 0
     }
 
-    // Update player's total score
+    // Update streak: increment if correct, reset if wrong
+    const newStreak = isCorrect ? player.streak + 1 : 0
+
+    // Calculate coins for this question
+    const coinsForQuestion = calculateCoinsForQuestion(isCorrect, newStreak)
+    const newCoins = player.coinsEarned + coinsForQuestion
+
+    // Update player's total score, streak, and coins
     const newScore = player.score + points
     await store.updatePlayer(sessionId, player.playerId, {
       score: newScore,
+      streak: newStreak,
+      coinsEarned: newCoins,
     })
 
     results.push({
@@ -299,6 +310,7 @@ export async function endQuestion(
       isCorrect,
       points,
       totalScore: newScore,
+      coinsForQuestion,
     })
   }
 
@@ -451,11 +463,59 @@ export async function advanceGame(
       }))
       .sort((a, b) => b.score - a.score)
 
+    // Award coins: apply placement bonus, repeat multiplier, persist to DB
+    const coinResults: Array<{
+      playerId: string
+      coinsEarned: number
+      isRepeatPlay: boolean
+    }> = []
+
+    for (let i = 0; i < finalStandings.length; i++) {
+      const standing = finalStandings[i]
+      const player = players.find((p) => p.playerId === standing.playerId)
+      if (!player) continue
+
+      const rank = i + 1
+      const placementBonus = calculateGameEndBonus(rank)
+      const baseCoins = player.coinsEarned + placementBonus
+
+      // Check for repeat play (anti-farming)
+      const multiplier = await getRepeatMultiplier(player.playerId, session.questionSetId)
+      const finalCoins = Math.floor(baseCoins * multiplier)
+
+      // Persist coins to database (increment, don't overwrite)
+      try {
+        await prisma.player.update({
+          where: { id: player.playerId },
+          data: { coins: { increment: finalCoins } },
+        })
+
+        // Record this game play for future anti-farming checks
+        await prisma.gamePlay.create({
+          data: {
+            playerId: player.playerId,
+            questionSetId: session.questionSetId,
+            coinsEarned: finalCoins,
+          },
+        })
+      } catch (dbError) {
+        // Don't crash the game if DB write fails (player might be ephemeral/test)
+        console.error(`Failed to persist coins for player ${player.playerId}:`, dbError)
+      }
+
+      coinResults.push({
+        playerId: player.playerId,
+        coinsEarned: finalCoins,
+        isRepeatPlay: multiplier < 1,
+      })
+    }
+
     console.log(`🏆 Game over! Winner: ${finalStandings[0]?.nickname ?? 'No players'}`)
 
     io.to(sessionId).emit('game:end', {
       phase: 'END',
       finalStandings,
+      coinResults,
     })
   } else {
     // Next question

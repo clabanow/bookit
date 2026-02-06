@@ -53,11 +53,14 @@ model Player {
   nickname  String
   pinHash   String   // 4-digit secret PIN (hashed for security)
   avatar    String?  // Optional avatar URL for future use
+  coins     Int      @default(0) // Gold coins earned from gameplay
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ownedCards PlayerCard[] // Cards this player has purchased
+  gamePlays  GamePlay[]   // Game history for anti-farming tracking
 
   @@index([userId])
 }
@@ -102,4 +105,63 @@ model Question {
   questionSet  QuestionSet  @relation(fields: [setId], references: [id], onDelete: Cascade)
 
   @@index([setId])
+}
+
+// ============================================
+// Coins & Trading Cards Models
+// ============================================
+
+/// Card rarity tiers — determines visual style and coin cost
+enum CardRarity {
+  COMMON      // 50 coins
+  RARE        // 200 coins
+  LEGENDARY   // 500 coins
+  MYSTICAL    // 1,500 coins
+  IRIDESCENT  // 5,000 coins
+}
+
+/// A collectible trading card in the catalog
+model Card {
+  id          String     @id @default(cuid())
+  name        String     @unique // e.g., "Cat", "Pumpkin Puppy"
+  description String     // Flavor text for the card
+  rarity      CardRarity
+  coinCost    Int        // How many coins to buy this card
+  imageUrl    String?    // Card art (future use)
+  season      String?    // null = always available, "OCT" / "NOV" / "DEC" = seasonal
+  createdAt   DateTime   @default(now())
+
+  // Relations
+  owners      PlayerCard[]
+}
+
+/// Join table: which players own which cards
+model PlayerCard {
+  id         String   @id @default(cuid())
+  playerId   String
+  cardId     String
+  obtainedAt DateTime @default(now())
+
+  // Relations
+  player     Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  card       Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, cardId]) // A player can only own each card once
+  @@index([playerId])
+  @@index([cardId])
+}
+
+/// Tracks each game a player completes — used for anti-farming coin reduction
+model GamePlay {
+  id             String   @id @default(cuid())
+  playerId       String
+  questionSetId  String
+  coinsEarned    Int      // Coins earned in this game (after multiplier)
+  playedAt       DateTime @default(now())
+
+  // Relations
+  player         Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId])
+  @@index([playerId, questionSetId]) // For quickly checking repeat plays
 }
