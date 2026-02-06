@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Bookit',
-  description: 'Live classroom quiz games that make learning fun and engaging',
+  title: 'Mack & Lex Games',
+  description: 'A multi-game platform for fun and learning — quizzes, spelling, and more',
 };
 
 // Viewport configuration for mobile devices

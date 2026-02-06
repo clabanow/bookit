@@ -291,7 +291,19 @@ This is the single source of truth for all development tasks. Work items are ord
 - **Files**: src/app/api/question-sets/[id]/export/route.ts, src/app/api/question-sets/import/route.ts, src/components/host/ImportQuestionSet.tsx
 - **Features**: Export to JSON, import from JSON, UI buttons in question sets page
 ### [ ] M6.4: Image support in questions
-### [ ] M6.5: Additional game modes (plugin interface)
+### [x] M6.5: Multi-game platform ("Mack & Lex Games")
+- **Acceptance Criteria**: Rebranded to "Mack & Lex Games", quiz routes under /games/quiz, game registry, home page as game browser
+- **Files**: src/lib/games/registry.ts, src/lib/games/index.ts, src/app/games/layout.tsx, src/app/games/quiz/layout.tsx, src/app/page.tsx (rewritten), plus ~17 files with route/cookie/brand updates
+- **Changes**:
+  - Created game registry with typed GameConfig array
+  - Moved host/, join/, play/ under /games/quiz/
+  - Updated all hardcoded route refs (/host → /games/quiz/host, etc.)
+  - Renamed cookies: bookit_session → mack_session, bookit_oauth_state → mack_oauth_state
+  - Renamed localStorage: bookit_host_session → mack_quiz_host_session, bookit_player_ → mack_player_
+  - Home page now shows game cards from registry
+  - Middleware protects /games/* instead of individual /host, /join, /play
+  - Cross-cutting pages (login, chat, admin, etc.) link to / instead of /host
+- **Tests**: 291 passing (no test changes needed)
 ### [ ] M6.6: Cosmetics/progression system
 ### [~] M6.7: Moderation tools (partial)
 - **Completed**: Kick player feature (host can remove players from lobby)
@@ -608,7 +620,7 @@ This is the single source of truth for all development tasks. Work items are ord
 
 ## Current Status
 
-**Current Task**: M10 + M12 COMPLETE! Chat Forum and Daily Spin Wheel implemented.
+**Current Task**: M6.5 COMPLETE! Rebranded to "Mack & Lex Games" multi-game platform.
 **Next Up**: M13 (Usage Limits)
 **Note**: Run `npx prisma migrate dev --name add_chat_and_spin` when DB is available (covers M10 ChatMessage + M12 lastSpinDate). Also pending: `npx prisma migrate dev --name add_coins_cards_system` and `npx tsx prisma/seed-cards.ts` from M11.
 
@@ -631,7 +643,7 @@ This is the single source of truth for all development tasks. Work items are ord
 - **M12**: Daily Spin Wheel ✓
 
 ### In Progress:
-- **M6**: Post-MVP features (partial — M6.9 mobile polish done)
+- **M6**: Post-MVP features (partial — M6.5 multi-game platform, M6.9 mobile polish done)
 
 ### Backlog:
 - **M13**: Usage Limits (Cost Control)

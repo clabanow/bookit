@@ -26,7 +26,7 @@ import {
 } from '@/lib/auth'
 
 // State cookie name (must match the one in /api/auth/google)
-const STATE_COOKIE = 'bookit_oauth_state'
+const STATE_COOKIE = 'mack_oauth_state'
 
 export async function GET(request: NextRequest) {
   // Use APP_URL for server-side, fall back to NEXT_PUBLIC_APP_URL, then localhost
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
 
     // Approved user - redirect to app
     // If this was a new user who somehow got auto-approved (admin?), go to host
-    return NextResponse.redirect(`${appUrl}/host`)
+    return NextResponse.redirect(`${appUrl}/`)
   } catch (error) {
     console.error('Google OAuth callback error:', error)
     return NextResponse.redirect(`${appUrl}/login?error=oauth_failed`)

@@ -77,7 +77,7 @@ async function start() {
     httpServer.listen(port, () => {
       console.log('')
       console.log('  ╔══════════════════════════════════════════════╗')
-      console.log('  ║           🎮 Bookit Game Server              ║')
+      console.log('  ║        🎮 Mack & Lex Game Server            ║')
       console.log('  ╠══════════════════════════════════════════════╣')
       console.log(`  ║  Port:     ${port}                              ║`)
       console.log(`  ║  Mode:     ${dev ? 'Development' : 'Production'}                  ║`)

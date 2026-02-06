@@ -5,11 +5,11 @@
  * Unauthenticated users are redirected to /login with a redirect param.
  *
  * Protected routes:
- * - /join - Players must be logged in to join games
- * - /play/* - Game pages require authentication
- * - /host - Hosts must be logged in to create games
+ * - /games/* - All game routes (host, join, play) require authentication
  * - /admin/* - Admin pages require authentication
  * - /account/* - Account management requires authentication
+ * - /chat - Chat requires authentication
+ * - /spin - Daily spin requires authentication
  */
 
 import { NextResponse } from 'next/server'
@@ -17,10 +17,11 @@ import type { NextRequest } from 'next/server'
 import { jwtVerify } from 'jose'
 
 // Cookie name must match session.ts
-const SESSION_COOKIE = 'bookit_session'
+const SESSION_COOKIE = 'mack_session'
 
 // Routes that require authentication
-const protectedPaths = ['/join', '/play', '/host', '/admin', '/account', '/chat', '/spin']
+// /games covers all game routes (quiz host, join, play, etc.)
+const protectedPaths = ['/games', '/admin', '/account', '/chat', '/spin']
 
 function getSecretKey(): Uint8Array {
   const secret = process.env.JWT_SECRET || 'development-secret-change-in-production'

@@ -50,10 +50,10 @@ export default async function QuestionSetsPage() {
           </div>
           <div className="flex gap-2 flex-wrap">
             <ImportQuestionSet />
-            <Link href="/host/sets/generate">
+            <Link href="/games/quiz/host/sets/generate">
               <Button variant="outline">AI Generate</Button>
             </Link>
-            <Link href="/host/sets/new">
+            <Link href="/games/quiz/host/sets/new">
               <Button>New Question Set</Button>
             </Link>
           </div>
@@ -61,7 +61,7 @@ export default async function QuestionSetsPage() {
 
         {/* Back link */}
         <div className="mb-6">
-          <Link href="/host" className="text-sm text-blue-600 hover:underline">
+          <Link href="/games/quiz/host" className="text-sm text-blue-600 hover:underline">
             &larr; Back to Host Dashboard
           </Link>
         </div>

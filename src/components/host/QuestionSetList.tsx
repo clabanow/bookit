@@ -54,7 +54,7 @@ export function QuestionSetList({ sets, onSelect, selectable = false }: Question
       <div className="rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
         <h3 className="mb-2 text-lg font-medium text-gray-900">No question sets yet</h3>
         <p className="mb-4 text-gray-500">Create your first quiz to get started</p>
-        <Link href="/host/sets/new">
+        <Link href="/games/quiz/host/sets/new">
           <Button>Create Question Set</Button>
         </Link>
       </div>
@@ -91,7 +91,7 @@ export function QuestionSetList({ sets, onSelect, selectable = false }: Question
               >
                 Export
               </Button>
-              <Link href={`/host/sets/${set.id}/edit`}>
+              <Link href={`/games/quiz/host/sets/${set.id}/edit`}>
                 <Button variant="outline" size="sm">
                   Edit
                 </Button>

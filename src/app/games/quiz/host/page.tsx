@@ -36,7 +36,7 @@ export default function HostPage() {
   // Check for stored session to set initial state
   const [state, setState] = useState<HostState>(() => {
     // Only run on client side
-    if (typeof window !== 'undefined' && localStorage.getItem('bookit_host_session')) {
+    if (typeof window !== 'undefined' && localStorage.getItem('mack_quiz_host_session')) {
       return 'creating' // Will attempt reconnection
     }
     return 'initial'
@@ -55,7 +55,7 @@ export default function HostPage() {
   useEffect(() => {
     if (attemptedReconnect.current) return
 
-    const storedSessionId = localStorage.getItem('bookit_host_session')
+    const storedSessionId = localStorage.getItem('mack_quiz_host_session')
 
     if (storedSessionId) {
       console.log('Found stored session, attempting reconnection:', storedSessionId)
@@ -80,7 +80,7 @@ export default function HostPage() {
       socket.on('error', (data) => {
         console.error('Reconnection error:', data)
         // Clear stored session on error (it's probably expired)
-        localStorage.removeItem('bookit_host_session')
+        localStorage.removeItem('mack_quiz_host_session')
         setState('initial')
       })
 
@@ -122,7 +122,7 @@ export default function HostPage() {
       setRoomCode(data.roomCode)
       setSessionId(data.sessionId)
       // Store session ID for reconnection
-      localStorage.setItem('bookit_host_session', data.sessionId)
+      localStorage.setItem('mack_quiz_host_session', data.sessionId)
       setState('lobby')
     })
 
@@ -222,7 +222,7 @@ export default function HostPage() {
 
         {/* Links */}
         <div className="text-center">
-          <Link href="/host/sets" className="text-sm text-blue-600 hover:underline">
+          <Link href="/games/quiz/host/sets" className="text-sm text-blue-600 hover:underline">
             Manage Question Sets
           </Link>
         </div>

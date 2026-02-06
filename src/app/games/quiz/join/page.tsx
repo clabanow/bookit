@@ -44,7 +44,7 @@ export default function JoinPage() {
         const res = await fetch('/api/auth/me')
         if (res.status === 401) {
           // Not logged in - redirect to login
-          router.push('/login?redirect=/join')
+          router.push('/login?redirect=/games/quiz/join')
           return
         }
         if (!res.ok) {
@@ -106,7 +106,7 @@ export default function JoinPage() {
         sessionStorage.setItem('sessionId', data.sessionId)
         sessionStorage.setItem('playerNickname', player.nickname)
 
-        router.push(`/play/${data.sessionId}`)
+        router.push(`/games/quiz/play/${data.sessionId}`)
       })
 
       socket.on('error', (data) => {

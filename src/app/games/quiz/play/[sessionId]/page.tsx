@@ -125,7 +125,7 @@ export default function PlayPage({ params }: PlayPageProps) {
     const socket = getSocket({ role: 'player' })
 
     // Check for stored player ID (for reconnection after refresh)
-    const storedPlayerId = localStorage.getItem(`bookit_player_${sessionId}`)
+    const storedPlayerId = localStorage.getItem(`mack_player_${sessionId}`)
 
     // Handle connection success
     socket.on('connect', () => {
@@ -283,10 +283,10 @@ export default function PlayPage({ params }: PlayPageProps) {
 
     // Handle being kicked by host
     socket.on('player:kicked', (data) => {
-      const storedId = localStorage.getItem(`bookit_player_${sessionId}`)
+      const storedId = localStorage.getItem(`mack_player_${sessionId}`)
       if (data.playerId === storedId || data.playerId === playerId) {
         console.log('You were kicked:', data.reason)
-        localStorage.removeItem(`bookit_player_${sessionId}`)
+        localStorage.removeItem(`mack_player_${sessionId}`)
         setError('You have been kicked from the game')
         disconnectSocket()
       }
@@ -296,7 +296,7 @@ export default function PlayPage({ params }: PlayPageProps) {
     socket.on('player:joined', (data) => {
       setPlayerId(data.playerId)
       // Store in localStorage for reconnection after refresh
-      localStorage.setItem(`bookit_player_${sessionId}`, data.playerId)
+      localStorage.setItem(`mack_player_${sessionId}`, data.playerId)
       // Extract nickname for chat
       const me = data.players.find(
         (p: { playerId: string }) => p.playerId === data.playerId
@@ -594,7 +594,7 @@ export default function PlayPage({ params }: PlayPageProps) {
 
         <div className="mt-6 md:mt-8 text-center">
           <Button
-            onClick={() => (window.location.href = '/join')}
+            onClick={() => (window.location.href = '/games/quiz/join')}
             className="bg-white text-orange-600 hover:bg-orange-100"
           >
             Play Again

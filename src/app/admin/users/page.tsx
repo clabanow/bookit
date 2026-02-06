@@ -135,8 +135,8 @@ export default function AdminUsersPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-2xl">User Management</CardTitle>
-            <Button variant="outline" size="sm" onClick={() => router.push('/host')}>
-              Back to Host
+            <Button variant="outline" size="sm" onClick={() => router.push('/')}>
+              Back to Home
             </Button>
           </CardHeader>
           <CardContent>

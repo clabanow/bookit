@@ -223,7 +223,7 @@ export default function GenerateQuestionsPage() {
       }
 
       // Success! Redirect to the sets page
-      router.push('/host/sets')
+      router.push('/games/quiz/host/sets')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save')
       setStep('review')
@@ -244,7 +244,7 @@ export default function GenerateQuestionsPage() {
               <h1 className="text-2xl font-bold text-white">AI Question Generator</h1>
               <p className="text-slate-400">Upload homework or enter text to generate questions</p>
             </div>
-            <Button variant="outline" size="sm" onClick={() => router.push('/host/sets')}>
+            <Button variant="outline" size="sm" onClick={() => router.push('/games/quiz/host/sets')}>
               Cancel
             </Button>
           </div>

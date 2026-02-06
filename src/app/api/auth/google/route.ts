@@ -18,7 +18,7 @@ import { cookies } from 'next/headers'
 import { generateOAuthState, buildGoogleAuthUrl } from '@/lib/auth'
 
 // State cookie name
-const STATE_COOKIE = 'bookit_oauth_state'
+const STATE_COOKIE = 'mack_oauth_state'
 // State expires in 10 minutes
 const STATE_MAX_AGE = 10 * 60
 

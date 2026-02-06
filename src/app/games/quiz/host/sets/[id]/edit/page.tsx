@@ -77,7 +77,7 @@ export default async function EditQuestionSetPage({ params }: PageProps) {
 
         {/* Back link */}
         <div className="mb-6">
-          <Link href="/host/sets" className="text-sm text-blue-600 hover:underline">
+          <Link href="/games/quiz/host/sets" className="text-sm text-blue-600 hover:underline">
             &larr; Back to Question Sets
           </Link>
         </div>

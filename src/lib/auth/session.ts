@@ -18,7 +18,7 @@ import type { User, Role, ApprovalStatus } from '@prisma/client'
 const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000 // milliseconds
 
 // Cookie name
-const SESSION_COOKIE = 'bookit_session'
+const SESSION_COOKIE = 'mack_session'
 
 // Get secret key from environment (or use a default for development)
 function getSecretKey(): Uint8Array {

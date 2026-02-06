@@ -195,7 +195,7 @@ export function QuestionSetEditor({ initialData }: QuestionSetEditorProps) {
       }
 
       // Navigate back to the list
-      router.push('/host/sets')
+      router.push('/games/quiz/host/sets')
       router.refresh() // Refresh to show updated data
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save')
@@ -393,7 +393,7 @@ export function QuestionSetEditor({ initialData }: QuestionSetEditorProps) {
         </Button>
         <Button
           variant="outline"
-          onClick={() => router.push('/host/sets')}
+          onClick={() => router.push('/games/quiz/host/sets')}
           disabled={saving}
         >
           Cancel

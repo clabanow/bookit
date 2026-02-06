@@ -14,7 +14,7 @@ When implementing features:
 
 ## Project Overview
 
-Bookit is a live classroom quiz platform. Host creates a room, players join via code, answer timed questions, compete on leaderboard.
+Mack & Lex Games is a multi-game platform for fun and learning. The first game is Bookit Quiz — a live classroom quiz where hosts create rooms, players join via code, answer timed questions, and compete on a leaderboard. The platform is designed so new game genres can be added via the game registry.
 
 ## Development Commands
 
@@ -52,13 +52,19 @@ npx prisma studio    # Open database GUI
 src/
 ├── app/                    # Next.js App Router
 │   ├── api/               # REST API routes
-│   ├── host/              # Host pages (lobby, sets)
-│   ├── join/              # Player join page
-│   └── play/[sessionId]/  # Player game view
+│   ├── games/
+│   │   └── quiz/          # Bookit Quiz game
+│   │       ├── host/      # Host pages (lobby, sets)
+│   │       ├── join/      # Player join page
+│   │       └── play/[sessionId]/  # Player game view
+│   ├── chat/              # Global chat
+│   ├── shop/              # Card shop
+│   └── spin/              # Daily spin
 ├── components/
 │   └── ui/                # shadcn/ui components
 ├── lib/
 │   ├── db.ts             # Prisma client
+│   ├── games/            # Game registry (multi-game config)
 │   ├── session/          # Session store (memory/Redis)
 │   ├── stateMachine/     # Game phase management
 │   ├── scoring/          # Scoring logic

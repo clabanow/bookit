@@ -94,7 +94,7 @@ export function SetSelector({ onSelect, selectedId }: SetSelectorProps) {
           <p className="text-gray-500">
             You don&apos;t have any question sets yet. Create one first!
           </p>
-          <Link href="/host/sets/new">
+          <Link href="/games/quiz/host/sets/new">
             <Button className="w-full">Create Question Set</Button>
           </Link>
         </CardContent>
@@ -126,7 +126,7 @@ export function SetSelector({ onSelect, selectedId }: SetSelectorProps) {
         ))}
 
         <div className="pt-2">
-          <Link href="/host/sets" className="text-sm text-blue-600 hover:underline">
+          <Link href="/games/quiz/host/sets" className="text-sm text-blue-600 hover:underline">
             Manage question sets
           </Link>
         </div>

@@ -136,7 +136,7 @@ export default function ChatPage() {
               Chatting as <span className="text-blue-400 font-medium">{selectedPlayer.nickname}</span>
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => router.push('/host')}>
+          <Button variant="outline" size="sm" onClick={() => router.push('/')}>
             Back
           </Button>
         </div>

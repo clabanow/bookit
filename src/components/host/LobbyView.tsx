@@ -54,7 +54,7 @@ export function LobbyView({
 
       {/* Room Code Section */}
       <div className="mb-8 md:mb-12 text-center">
-        <p className="mb-2 text-base md:text-xl opacity-80">Join at bookit.app with code:</p>
+        <p className="mb-2 text-base md:text-xl opacity-80">Join with code:</p>
         <div className="rounded-2xl bg-white px-4 py-4 md:px-8 md:py-6 shadow-2xl">
           <span className="font-mono text-4xl sm:text-5xl md:text-6xl font-bold tracking-widest text-blue-600">
             {roomCode}
