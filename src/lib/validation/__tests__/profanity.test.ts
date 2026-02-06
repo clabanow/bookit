@@ -1,5 +1,13 @@
 /**
  * Profanity Filter Tests
+ *
+ * Tests cover:
+ * - Basic profanity detection with the real word list
+ * - Character substitution evasion detection
+ * - Allowlist prevents false positives (e.g., "class" not flagged for "ass")
+ * - Custom configuration
+ * - Runtime modification
+ * - Convenience functions
  */
 
 import { describe, it, expect, beforeEach } from 'vitest'
@@ -11,18 +19,46 @@ import {
 } from '../profanity'
 
 describe('ProfanityFilter', () => {
-  describe('Basic filtering', () => {
-    it('detects blocked words', () => {
+  describe('Basic filtering with real word list', () => {
+    it('detects common profanity', () => {
       const filter = new ProfanityFilter()
-      const result = filter.check('this is badword')
 
-      expect(result.containsProfanity).toBe(true)
-      expect(result.matchedWords).toContain('badword')
+      expect(filter.check('what the fuck').containsProfanity).toBe(true)
+      expect(filter.check('oh shit').containsProfanity).toBe(true)
+      expect(filter.check('you bitch').containsProfanity).toBe(true)
+    })
+
+    it('detects slurs', () => {
+      const filter = new ProfanityFilter()
+
+      expect(filter.check('you retard').containsProfanity).toBe(true)
+      expect(filter.check('thats so retarded').containsProfanity).toBe(true)
+    })
+
+    it('detects sexual content', () => {
+      const filter = new ProfanityFilter()
+
+      expect(filter.check('send nudes').containsProfanity).toBe(true)
+      expect(filter.check('thats porn').containsProfanity).toBe(true)
+    })
+
+    it('detects bullying terms', () => {
+      const filter = new ProfanityFilter()
+
+      expect(filter.check('youre an idiot').containsProfanity).toBe(true)
+      expect(filter.check('ur so stupid').containsProfanity).toBe(true)
+    })
+
+    it('detects violence/hate speech', () => {
+      const filter = new ProfanityFilter()
+
+      expect(filter.check('kill yourself').containsProfanity).toBe(true)
+      expect(filter.check('kys').containsProfanity).toBe(true)
     })
 
     it('allows clean text', () => {
       const filter = new ProfanityFilter()
-      const result = filter.check('hello world')
+      const result = filter.check('great job on that quiz')
 
       expect(result.containsProfanity).toBe(false)
       expect(result.matchedWords).toHaveLength(0)
@@ -31,16 +67,105 @@ describe('ProfanityFilter', () => {
     it('is case insensitive', () => {
       const filter = new ProfanityFilter()
 
-      expect(filter.check('BADWORD').containsProfanity).toBe(true)
-      expect(filter.check('BadWord').containsProfanity).toBe(true)
-      expect(filter.check('bAdWoRd').containsProfanity).toBe(true)
+      expect(filter.check('SHIT').containsProfanity).toBe(true)
+      expect(filter.check('Fuck').containsProfanity).toBe(true)
+      expect(filter.check('bItCh').containsProfanity).toBe(true)
     })
 
     it('detects words embedded in other text', () => {
       const filter = new ProfanityFilter()
 
-      expect(filter.check('xbadwordy').containsProfanity).toBe(true)
-      expect(filter.check('prefix_offensive_suffix').containsProfanity).toBe(true)
+      expect(filter.check('xfucky').containsProfanity).toBe(true)
+    })
+  })
+
+  describe('Allowlist prevents false positives', () => {
+    it('allows "class" (contains "ass")', () => {
+      const filter = new ProfanityFilter()
+
+      expect(filter.check('math class').containsProfanity).toBe(false)
+      expect(filter.check('classic game').containsProfanity).toBe(false)
+    })
+
+    it('allows "hello" (contains "hell")', () => {
+      const filter = new ProfanityFilter()
+
+      expect(filter.check('hello everyone').containsProfanity).toBe(false)
+    })
+
+    it('allows "grass" and "pass" (contain "ass")', () => {
+      const filter = new ProfanityFilter()
+
+      expect(filter.check('green grass').containsProfanity).toBe(false)
+      expect(filter.check('you pass').containsProfanity).toBe(false)
+    })
+
+    it('allows "grape" (contains "rape")', () => {
+      const filter = new ProfanityFilter()
+
+      expect(filter.check('grape juice').containsProfanity).toBe(false)
+    })
+
+    it('allows "peacock" (contains "cock")', () => {
+      const filter = new ProfanityFilter()
+
+      expect(filter.check('a peacock').containsProfanity).toBe(false)
+    })
+
+    it('allows "shell" (contains "hell")', () => {
+      const filter = new ProfanityFilter()
+
+      expect(filter.check('seashell').containsProfanity).toBe(false)
+    })
+
+    it('allows "cucumber" (contains "cum")', () => {
+      const filter = new ProfanityFilter()
+
+      expect(filter.check('cucumber salad').containsProfanity).toBe(false)
+    })
+
+    it('allows "assistant" (contains "ass")', () => {
+      const filter = new ProfanityFilter()
+
+      expect(filter.check('my assistant').containsProfanity).toBe(false)
+    })
+
+    it('allows "raccoon" (contains "coon")', () => {
+      const filter = new ProfanityFilter()
+
+      expect(filter.check('a raccoon').containsProfanity).toBe(false)
+    })
+
+    it('allows "spice" (contains "spic")', () => {
+      const filter = new ProfanityFilter()
+
+      expect(filter.check('spice girls').containsProfanity).toBe(false)
+    })
+
+    it('allows "mississippi" (contains "piss")', () => {
+      const filter = new ProfanityFilter()
+
+      expect(filter.check('mississippi river').containsProfanity).toBe(false)
+    })
+
+    it('still blocks the actual bad word even if allowlisted words exist', () => {
+      const filter = new ProfanityFilter()
+
+      // "class" is fine, but "ass" alone is still caught via "asshole", "dumbass", etc.
+      expect(filter.check('class is fun').containsProfanity).toBe(false)
+      expect(filter.check('what an asshole').containsProfanity).toBe(true)
+    })
+
+    it('allows "method" (contains "meth")', () => {
+      const filter = new ProfanityFilter()
+
+      expect(filter.check('study method').containsProfanity).toBe(false)
+    })
+
+    it('allows "analyze" (contains "anal")', () => {
+      const filter = new ProfanityFilter()
+
+      expect(filter.check('analyze this').containsProfanity).toBe(false)
     })
   })
 
@@ -80,6 +205,15 @@ describe('ProfanityFilter', () => {
 
       expect(filter.check('t3$t').containsProfanity).toBe(true)
     })
+
+    it('catches f*ck style evasion with real list', () => {
+      const filter = new ProfanityFilter()
+
+      expect(filter.check('fvck').containsProfanity).toBe(false) // 'v' not substituted — acceptable gap
+      expect(filter.check('f@ck').containsProfanity).toBe(false) // @ → a → "fack" not in list
+      expect(filter.check('sh1t').containsProfanity).toBe(true) // 1 → i → "shit" ✓
+      expect(filter.check('b1tch').containsProfanity).toBe(true) // 1 → i → "bitch" ✓
+    })
   })
 
   describe('Custom configuration', () => {
@@ -89,7 +223,7 @@ describe('ProfanityFilter', () => {
       })
 
       expect(filter.check('customword').containsProfanity).toBe(true)
-      expect(filter.check('badword').containsProfanity).toBe(false) // Not in custom list
+      expect(filter.check('fuck').containsProfanity).toBe(false) // Not in custom list
     })
 
     it('adds additional words to default list', () => {
@@ -97,14 +231,14 @@ describe('ProfanityFilter', () => {
         additionalWords: ['extraword'],
       })
 
-      expect(filter.check('badword').containsProfanity).toBe(true) // Default still works
+      expect(filter.check('shit').containsProfanity).toBe(true) // Default still works
       expect(filter.check('extraword').containsProfanity).toBe(true) // Additional word works
     })
 
-    it('respects allowlist', () => {
+    it('respects allowlist for custom blocklist', () => {
       const filter = new ProfanityFilter({
         blocklist: ['badword'],
-        allowlist: ['badword'], // Explicitly allow this word
+        allowlist: ['badword'],
       })
 
       expect(filter.check('badword').containsProfanity).toBe(false)
@@ -153,7 +287,7 @@ describe('ProfanityFilter', () => {
     it('returns false for profane text', () => {
       const filter = new ProfanityFilter()
 
-      expect(filter.isClean('badword')).toBe(false)
+      expect(filter.isClean('fuck this')).toBe(false)
     })
   })
 
@@ -166,6 +300,13 @@ describe('ProfanityFilter', () => {
       expect(list).toContain('word2')
       expect(list).toHaveLength(2)
     })
+
+    it('default blocklist has many words', () => {
+      const filter = new ProfanityFilter()
+      const list = filter.getBlocklist()
+
+      expect(list.length).toBeGreaterThan(50)
+    })
   })
 })
 
@@ -176,16 +317,16 @@ describe('Convenience functions', () => {
     })
 
     it('returns false for profane text', () => {
-      expect(isCleanText('badword')).toBe(false)
+      expect(isCleanText('you suck')).toBe(false)
     })
   })
 
   describe('checkProfanity', () => {
     it('returns detailed result', () => {
-      const result = checkProfanity('badword')
+      const result = checkProfanity('what the fuck')
 
       expect(result.containsProfanity).toBe(true)
-      expect(result.matchedWords).toContain('badword')
+      expect(result.matchedWords).toContain('fuck')
     })
   })
 

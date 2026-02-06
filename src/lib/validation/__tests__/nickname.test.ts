@@ -91,22 +91,19 @@ describe('validateNickname', () => {
 
   describe('profanity filter', () => {
     it('rejects inappropriate nicknames', () => {
-      // Uses the default blocklist from profanity.ts
-      const result = validateNickname('badword')
+      // Uses the real blocklist from blocklist.ts
+      const result = validateNickname('loser')
       expect(result.valid).toBe(false)
       expect(result.error).toBe('Please choose an appropriate nickname')
     })
 
     it('rejects nicknames with embedded profanity', () => {
-      const result = validateNickname('xbadwordx')
+      const result = validateNickname('xidiotx')
       expect(result.valid).toBe(false)
     })
 
-    it('catches character substitutions', () => {
-      // 'b@dword' normalizes to 'badword'
-      // But @ is not allowed by NICKNAME_PATTERN, so it fails that check first
-      // Test with a word that uses allowed characters
-      const result = validateNickname('offensive')
+    it('catches profanity in mixed text', () => {
+      const result = validateNickname('stupid123')
       expect(result.valid).toBe(false)
     })
 

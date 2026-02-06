@@ -14,21 +14,17 @@
  */
 
 /**
- * Default blocklist - a minimal set of obvious words.
+ * Import the real blocklist/allowlist.
  *
- * In production, you'd typically:
- * - Load a more comprehensive list from a file or database
- * - Use a service like Perspective API or similar
- * - Allow admins to add/remove words
- *
- * This stub uses a minimal list for testing purposes.
+ * The word lists are in a separate file (blocklist.ts) for maintainability.
+ * They're organized by category (profanity, slurs, sexual, drugs, etc.)
+ * with an allowlist for innocent words that contain blocked substrings
+ * (e.g., "class" contains "ass").
  */
-const DEFAULT_BLOCKLIST: string[] = [
-  // Minimal set for testing - expand as needed
-  'badword',
-  'offensive',
-  'inappropriate',
-]
+import {
+  DEFAULT_BLOCKLIST as BLOCKLIST_WORDS,
+  DEFAULT_ALLOWLIST as ALLOWLIST_WORDS,
+} from './blocklist'
 
 /**
  * Character substitutions commonly used to evade filters.
@@ -89,7 +85,7 @@ export class ProfanityFilter {
 
   constructor(config: ProfanityFilterConfig = {}) {
     // Start with default or custom blocklist
-    const baseList = config.blocklist ?? DEFAULT_BLOCKLIST
+    const baseList = config.blocklist ?? BLOCKLIST_WORDS
 
     // Add any additional words
     const fullList = [...baseList, ...(config.additionalWords ?? [])]
@@ -97,8 +93,10 @@ export class ProfanityFilter {
     // Store as lowercase Set for fast lookups
     this.blocklist = new Set(fullList.map((w) => w.toLowerCase()))
 
-    // Store allowlist
-    this.allowlist = new Set((config.allowlist ?? []).map((w) => w.toLowerCase()))
+    // Merge default allowlist with any custom allowlist
+    const baseAllowlist = config.blocklist ? [] : ALLOWLIST_WORDS
+    const fullAllowlist = [...baseAllowlist, ...(config.allowlist ?? [])]
+    this.allowlist = new Set(fullAllowlist.map((w) => w.toLowerCase()))
   }
 
   /**
@@ -138,17 +136,28 @@ export class ProfanityFilter {
     const normalized = this.normalize(text)
     const matchedWords: string[] = []
 
+    // Split into individual words for allowlist checking
+    const inputWords = normalized.split(' ')
+
     for (const blockedWord of this.blocklist) {
-      // Skip if word is in allowlist
-      if (this.allowlist.has(blockedWord)) {
+      // Check if blocked word appears in normalized text
+      if (!normalized.includes(blockedWord)) {
         continue
       }
 
-      // Check if blocked word appears in normalized text
-      // We check for the word as a substring, which catches:
-      // - Exact matches: "badword" in "badword"
-      // - Embedded in other text: "badword" in "xbadwordy"
-      if (normalized.includes(blockedWord)) {
+      // Check if the match is fully explained by allowlisted words.
+      // For example, "class" is allowlisted and contains "ass",
+      // so "ass" shouldn't trigger when the input is "class".
+      //
+      // For multi-word blocked phrases (e.g., "kill yourself"),
+      // no single input word will contain the full phrase,
+      // so they're always flagged.
+      const wordsContainingBlocked = inputWords.filter((w) => w.includes(blockedWord))
+      const isExplainedByAllowlist =
+        wordsContainingBlocked.length > 0 &&
+        wordsContainingBlocked.every((w) => this.allowlist.has(w))
+
+      if (!isExplainedByAllowlist) {
         matchedWords.push(blockedWord)
       }
     }
