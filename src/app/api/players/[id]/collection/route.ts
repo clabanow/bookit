@@ -53,6 +53,7 @@ export async function GET(
       description: card.description,
       rarity: card.rarity,
       coinCost: card.coinCost,
+      imageUrl: card.imageUrl,
       season: card.season,
       owned: ownedMap.has(card.id),
       obtainedAt: ownedMap.get(card.id)?.toISOString() ?? null,

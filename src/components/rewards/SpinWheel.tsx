@@ -26,6 +26,8 @@ interface SpinWheelProps {
   prizes: Prize[]
   canSpin: boolean
   onSpin: () => Promise<{ prizeIndex: number; prizeCoins: number; newBalance: number } | null>
+  /** Called when the spin animation finishes and the result is revealed */
+  onAnimationComplete?: (result: { coins: number; newBalance: number }) => void
 }
 
 /** Map Tailwind bg classes to hex colors for conic-gradient */
@@ -42,7 +44,7 @@ function prizeToHex(color: string): string {
   return map[color] || '#6b7280'
 }
 
-export function SpinWheel({ prizes, canSpin, onSpin }: SpinWheelProps) {
+export function SpinWheel({ prizes, canSpin, onSpin, onAnimationComplete }: SpinWheelProps) {
   const [spinning, setSpinning] = useState(false)
   const [rotation, setRotation] = useState(0)
   const [result, setResult] = useState<{ coins: number; newBalance: number } | null>(null)
@@ -85,13 +87,15 @@ export function SpinWheel({ prizes, canSpin, onSpin }: SpinWheelProps) {
 
     // Show result after animation completes (4 seconds)
     setTimeout(() => {
-      setResult({
+      const resultData = {
         coins: spinResult.prizeCoins,
         newBalance: spinResult.newBalance,
-      })
+      }
+      setResult(resultData)
       setSpinning(false)
+      onAnimationComplete?.(resultData)
     }, 4200)
-  }, [spinning, canSpin, onSpin, rotation, segmentAngle])
+  }, [spinning, canSpin, onSpin, onAnimationComplete, rotation, segmentAngle])
 
   return (
     <div className="flex flex-col items-center gap-6">
@@ -113,23 +117,18 @@ export function SpinWheel({ prizes, canSpin, onSpin }: SpinWheelProps) {
         >
           {/* Prize labels on the wheel */}
           {prizes.map((prize, i) => {
+            // Rotate a full-size overlay so the label sits at the segment's center angle,
+            // then place the text near the outer edge (15% from top ≈ 70% of radius).
             const angle = i * segmentAngle + segmentAngle / 2
             return (
               <div
                 key={i}
-                className="absolute left-1/2 top-1/2 origin-center"
-                style={{
-                  transform: `rotate(${angle}deg) translateY(-45%) translateX(-50%)`,
-                  width: '1px',
-                  height: '1px',
-                }}
+                className="absolute inset-0"
+                style={{ transform: `rotate(${angle}deg)` }}
               >
                 <span
-                  className="text-white font-bold text-xs md:text-sm drop-shadow-md whitespace-nowrap"
-                  style={{
-                    display: 'block',
-                    transform: `translateX(-50%) translateY(-30px)`,
-                  }}
+                  className="absolute left-1/2 -translate-x-1/2 text-white font-bold text-xs md:text-sm drop-shadow-md whitespace-nowrap"
+                  style={{ top: '12%' }}
                 >
                   {prize.label}
                 </span>

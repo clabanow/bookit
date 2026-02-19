@@ -79,8 +79,8 @@ export default function SpinPage() {
 
       const data = await res.json()
 
-      // Update local state after spin
-      setCoins(data.newBalance)
+      // Don't update coins yet — wait for the wheel animation to finish
+      // so the result isn't spoiled. Coins update via onAnimationComplete.
       setCanSpin(false)
 
       return data
@@ -143,7 +143,12 @@ export default function SpinPage() {
 
         {/* Spin wheel */}
         <div className="flex justify-center">
-          <SpinWheel prizes={prizes} canSpin={canSpin} onSpin={handleSpin} />
+          <SpinWheel
+            prizes={prizes}
+            canSpin={canSpin}
+            onSpin={handleSpin}
+            onAnimationComplete={(result) => setCoins(result.newBalance)}
+          />
         </div>
       </div>
     </div>

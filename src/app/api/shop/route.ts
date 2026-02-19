@@ -73,6 +73,7 @@ export async function GET(request: NextRequest) {
       description: card.description,
       rarity: card.rarity,
       coinCost: card.coinCost,
+      imageUrl: card.imageUrl,
       season: card.season,
       owned: ownedCardIds.has(card.id),
     }))

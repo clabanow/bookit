@@ -18,8 +18,17 @@ interface ShopCard {
   description: string
   rarity: 'COMMON' | 'RARE' | 'LEGENDARY' | 'MYSTICAL' | 'IRIDESCENT'
   coinCost: number
+  imageUrl: string | null
   season: string | null
   owned: boolean
+}
+
+/** Extract emoji from imageUrl format "emoji:🐱" */
+function getCardEmoji(imageUrl: string | null): string {
+  if (imageUrl && imageUrl.startsWith('emoji:')) {
+    return imageUrl.slice(6)
+  }
+  return '?'
 }
 
 /** Visual config for each rarity tier */
@@ -220,9 +229,13 @@ export default function ShopPage() {
                         card.owned ? 'opacity-70' : ''
                       }`}
                     >
-                      {/* Card art placeholder */}
-                      <div className="w-full aspect-square rounded-md bg-slate-700/50 mb-2 flex items-center justify-center text-3xl">
-                        {card.owned ? '✓' : '?'}
+                      {/* Card art */}
+                      <div className="w-full aspect-square rounded-md bg-slate-700/50 mb-2 flex items-center justify-center text-5xl">
+                        {card.owned ? (
+                          getCardEmoji(card.imageUrl)
+                        ) : (
+                          <span className="opacity-30 text-3xl">?</span>
+                        )}
                       </div>
 
                       {/* Card info */}

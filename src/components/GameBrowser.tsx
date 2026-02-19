@@ -25,7 +25,16 @@ interface Player {
   nickname: string
   avatar: string | null
   coins: number
+  cardCount: number
   createdAt: string
+}
+
+/** A Common card available as a starter pick */
+interface StarterCard {
+  id: string
+  name: string
+  description: string
+  imageUrl: string | null
 }
 
 /** Serializable game config passed from the server component */
@@ -51,8 +60,18 @@ export function GameBrowser({ games }: { games: GameConfig[] }) {
 
   // Active player selection
   const [activePlayerId, setActivePlayerId] = useState<string | null>(null)
-  const [showPlayerPicker, setShowPlayerPicker] = useState(false)
   const [showCreateForm, setShowCreateForm] = useState(false)
+
+  // PIN verification state (for selecting a player)
+  const [pinTarget, setPinTarget] = useState<string | null>(null)
+  const [pinValue, setPinValue] = useState('')
+  const [pinError, setPinError] = useState('')
+  const [verifyingPin, setVerifyingPin] = useState(false)
+
+  // Starter card state (shown when active player has 0 cards)
+  const [starterCards, setStarterCards] = useState<StarterCard[]>([])
+  const [loadingStarters, setLoadingStarters] = useState(false)
+  const [claimingCard, setClaimingCard] = useState<string | null>(null)
 
   // Create form state
   const [nickname, setNickname] = useState('')
@@ -77,16 +96,13 @@ export function GameBrowser({ games }: { games: GameConfig[] }) {
       setPlayers(data.players)
       setCanCreateMore(data.canCreateMore)
 
-      // Restore active player from localStorage, or auto-select the first one
+      // Restore active player from localStorage (but don't auto-select —
+      // players must verify their PIN to select a profile)
       const stored = localStorage.getItem(ACTIVE_PLAYER_KEY)
       const playerIds = (data.players as Player[]).map((p) => p.id)
 
       if (stored && playerIds.includes(stored)) {
         setActivePlayerId(stored)
-      } else if (data.players.length > 0) {
-        const firstId = data.players[0].id
-        setActivePlayerId(firstId)
-        localStorage.setItem(ACTIVE_PLAYER_KEY, firstId)
       }
     } catch {
       setError('Failed to load players')
@@ -99,13 +115,119 @@ export function GameBrowser({ games }: { games: GameConfig[] }) {
     fetchPlayers()
   }, [fetchPlayers])
 
-  // --- Player selection ---
+  // --- Player selection (PIN-gated) ---
 
-  function selectPlayer(playerId: string) {
-    setActivePlayerId(playerId)
-    localStorage.setItem(ACTIVE_PLAYER_KEY, playerId)
-    setShowPlayerPicker(false)
+  /** Start PIN entry for a player (from picker or selection screen) */
+  function startPinEntry(playerId: string) {
+    setPinTarget(playerId)
+    setPinValue('')
+    setPinError('')
   }
+
+  /** Verify PIN and activate the player if correct */
+  async function handlePinSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!pinTarget || pinValue.length !== 4) return
+
+    setVerifyingPin(true)
+    setPinError('')
+
+    try {
+      const res = await fetch(`/api/players/${pinTarget}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: pinValue }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setPinError(data.error || 'Wrong PIN')
+        setPinValue('')
+        return
+      }
+
+      // PIN verified — activate this player
+      setActivePlayerId(pinTarget)
+      localStorage.setItem(ACTIVE_PLAYER_KEY, pinTarget)
+      setPinTarget(null)
+      setPinValue('')
+    } catch {
+      setPinError('Failed to verify PIN')
+    } finally {
+      setVerifyingPin(false)
+    }
+  }
+
+  /** Cancel PIN entry and go back to player list */
+  function cancelPinEntry() {
+    setPinTarget(null)
+    setPinValue('')
+    setPinError('')
+  }
+
+  /** Switch player — clear active player so the selection screen shows */
+  function switchPlayer() {
+    setActivePlayerId(null)
+    localStorage.removeItem(ACTIVE_PLAYER_KEY)
+    setShowCreateForm(false)
+  }
+
+  // --- Starter card flow ---
+
+  /** Fetch Common cards when active player needs a starter */
+  const fetchStarterCards = useCallback(async (playerId: string) => {
+    setLoadingStarters(true)
+    try {
+      const res = await fetch(`/api/players/${playerId}/starter-card`)
+      if (res.ok) {
+        const data = await res.json()
+        setStarterCards(data.cards)
+      }
+    } catch {
+      // Silently fail — player can still use the app without a card
+    } finally {
+      setLoadingStarters(false)
+    }
+  }, [])
+
+  /** Claim a free Common card as starter */
+  async function claimStarterCard(cardId: string) {
+    if (!activePlayerId || claimingCard) return
+    setClaimingCard(cardId)
+    setError('')
+
+    try {
+      const res = await fetch(`/api/players/${activePlayerId}/starter-card`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cardId }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        setError(data.error || 'Failed to claim card')
+        return
+      }
+
+      // Refresh player list so cardCount updates
+      await fetchPlayers()
+    } catch {
+      setError('Network error')
+    } finally {
+      setClaimingCard(null)
+    }
+  }
+
+  // When active player changes, check if they need a starter card
+  useEffect(() => {
+    if (activePlayerId) {
+      const player = players.find((p) => p.id === activePlayerId)
+      if (player && player.cardCount === 0) {
+        fetchStarterCards(activePlayerId)
+      }
+    }
+  }, [activePlayerId, players, fetchStarterCards])
 
   // --- Player creation ---
 
@@ -170,6 +292,9 @@ export function GameBrowser({ games }: { games: GameConfig[] }) {
 
   const activePlayer = players.find((p) => p.id === activePlayerId) ?? null
   const isFirstTimeUser = !loading && players.length === 0
+  const needsPlayerSelection = !loading && players.length > 0 && !activePlayerId
+  const needsStarterCard = activePlayer !== null && activePlayer.cardCount === 0
+  const pinTargetPlayer = players.find((p) => p.id === pinTarget) ?? null
 
   // --- Render ---
 
@@ -213,7 +338,187 @@ export function GameBrowser({ games }: { games: GameConfig[] }) {
     )
   }
 
-  // Has players — show player bar + game cards
+  // Has players but none selected — show "Who's Playing?" selection screen
+  if (needsPlayerSelection) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4 md:p-8">
+        <Nav />
+
+        <main className="flex flex-col items-center text-center w-full max-w-md">
+          <h1 className="mb-2 text-4xl sm:text-5xl font-bold text-blue-600">
+            Mack &amp; Lex Games
+          </h1>
+
+          {/* PIN entry screen */}
+          {pinTargetPlayer ? (
+            <div className="mt-8 w-full rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+              <div className="flex h-16 w-16 mx-auto mb-3 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-2xl font-bold text-white">
+                {pinTargetPlayer.nickname.charAt(0).toUpperCase()}
+              </div>
+              <h2 className="text-lg font-bold text-gray-900 mb-1">
+                {pinTargetPlayer.nickname}
+              </h2>
+              <p className="text-sm text-gray-500 mb-4">Enter your secret PIN</p>
+
+              <form onSubmit={handlePinSubmit} className="space-y-4">
+                <Input
+                  type="password"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={4}
+                  placeholder="****"
+                  value={pinValue}
+                  onChange={(e) => setPinValue(e.target.value.replace(/\D/g, ''))}
+                  className="text-center text-2xl tracking-[0.5em] font-mono"
+                  autoFocus
+                  disabled={verifyingPin}
+                />
+
+                {pinError && (
+                  <p className="text-red-500 text-sm text-center">{pinError}</p>
+                )}
+
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={cancelPinEntry}
+                    disabled={verifyingPin}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="flex-1"
+                    disabled={pinValue.length !== 4 || verifyingPin}
+                  >
+                    {verifyingPin ? 'Checking...' : 'Enter'}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          ) : (
+            /* Player selection list */
+            <>
+              <p className="mb-6 text-lg text-gray-600">Who&apos;s playing?</p>
+
+              <div className="w-full space-y-3">
+                {players.map((player) => (
+                  <button
+                    key={player.id}
+                    onClick={() => startPinEntry(player.id)}
+                    className="w-full flex items-center gap-3 p-4 rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md hover:border-blue-400 transition-all text-left cursor-pointer"
+                  >
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-lg font-bold text-white">
+                      {player.nickname.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">{player.nickname}</p>
+                      <p className="text-xs text-yellow-600">{player.coins} coins</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {canCreateMore && (
+                <div className="mt-6 w-full">
+                  {showCreateForm ? (
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                      <div className="mb-3 flex items-center justify-between">
+                        <h3 className="text-sm font-medium text-gray-900">New Player</h3>
+                        <Button variant="ghost" size="sm" className="text-xs" onClick={resetForm}>
+                          Cancel
+                        </Button>
+                      </div>
+                      <CreatePlayerForm
+                        nickname={nickname}
+                        setNickname={setNickname}
+                        pin={pin}
+                        setPin={setPin}
+                        confirmPin={confirmPin}
+                        setConfirmPin={setConfirmPin}
+                        creating={creating}
+                        onSubmit={handleCreate}
+                      />
+                    </div>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        setShowCreateForm(true)
+                        setError('')
+                      }}
+                    >
+                      + Create New Player
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {error && <ErrorBanner message={error} />}
+            </>
+          )}
+        </main>
+      </div>
+    )
+  }
+
+  // Active player has no cards — show starter card picker
+  if (needsStarterCard) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4 md:p-8">
+        <Nav />
+
+        <main className="flex flex-col items-center text-center w-full max-w-lg">
+          <h1 className="mb-2 text-3xl sm:text-4xl font-bold text-blue-600">
+            Pick Your Starter!
+          </h1>
+          <p className="mb-6 text-gray-600">
+            Choose a free card to start your collection, {activePlayer?.nickname}!
+          </p>
+
+          {loadingStarters ? (
+            <p className="text-gray-500">Loading cards...</p>
+          ) : starterCards.length === 0 ? (
+            <p className="text-gray-500">No starter cards available yet.</p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 w-full">
+              {starterCards.map((card) => {
+                const emoji = card.imageUrl?.startsWith('emoji:')
+                  ? card.imageUrl.slice(6)
+                  : '?'
+                return (
+                  <button
+                    key={card.id}
+                    onClick={() => claimStarterCard(card.id)}
+                    disabled={claimingCard !== null}
+                    className={`rounded-xl border-2 bg-white p-4 shadow-sm transition-all text-center cursor-pointer ${
+                      claimingCard === card.id
+                        ? 'border-blue-500 scale-95'
+                        : 'border-gray-200 hover:border-blue-400 hover:shadow-md'
+                    } ${claimingCard !== null && claimingCard !== card.id ? 'opacity-50' : ''}`}
+                  >
+                    <div className="text-5xl mb-2">{emoji}</div>
+                    <p className="font-medium text-gray-900 text-sm">{card.name}</p>
+                    <p className="text-xs text-gray-500 mt-1">{card.description}</p>
+                    {claimingCard === card.id && (
+                      <p className="text-xs text-blue-500 mt-2 font-medium">Choosing...</p>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          {error && <ErrorBanner message={error} />}
+        </main>
+      </div>
+    )
+  }
+
+  // Has players AND active player with cards — show player bar + game cards
   return (
     <div className="flex min-h-screen flex-col items-center bg-gradient-to-b from-blue-50 to-white p-4 md:p-8">
       <Nav />
@@ -242,82 +547,15 @@ export function GameBrowser({ games }: { games: GameConfig[] }) {
               <p className="text-sm text-gray-500">Select a player</p>
             )}
 
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs"
-                onClick={() => {
-                  setShowPlayerPicker(!showPlayerPicker)
-                  setShowCreateForm(false)
-                }}
-              >
-                Switch
-              </Button>
-              {canCreateMore && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-xs"
-                  onClick={() => {
-                    setShowCreateForm(!showCreateForm)
-                    setShowPlayerPicker(false)
-                    setError('')
-                  }}
-                >
-                  + New
-                </Button>
-              )}
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs"
+              onClick={switchPlayer}
+            >
+              Switch Player
+            </Button>
           </div>
-
-          {/* Player picker dropdown */}
-          {showPlayerPicker && (
-            <div className="mt-2 rounded-lg border border-gray-200 bg-white p-2 shadow-md">
-              {players.map((player) => (
-                <button
-                  key={player.id}
-                  className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-blue-50 ${
-                    player.id === activePlayerId ? 'bg-blue-50' : ''
-                  }`}
-                  onClick={() => selectPlayer(player.id)}
-                >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-sm font-bold text-white">
-                    {player.nickname.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{player.nickname}</p>
-                    <p className="text-xs text-yellow-600">{player.coins} coins</p>
-                  </div>
-                  {player.id === activePlayerId && (
-                    <span className="ml-auto text-xs text-blue-600">Active</span>
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Inline create form (shown when "+ New" is clicked) */}
-          {showCreateForm && (
-            <div className="mt-2 rounded-lg border border-gray-200 bg-white p-4 shadow-md">
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-sm font-medium text-gray-900">New Player</h3>
-                <Button variant="ghost" size="sm" className="text-xs" onClick={resetForm}>
-                  Cancel
-                </Button>
-              </div>
-              <CreatePlayerForm
-                nickname={nickname}
-                setNickname={setNickname}
-                pin={pin}
-                setPin={setPin}
-                confirmPin={confirmPin}
-                setConfirmPin={setConfirmPin}
-                creating={creating}
-                onSubmit={handleCreate}
-              />
-            </div>
-          )}
 
           {error && <ErrorBanner message={error} />}
         </div>

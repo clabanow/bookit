@@ -45,6 +45,7 @@ export async function GET() {
         avatar: true,
         coins: true,
         createdAt: true,
+        _count: { select: { ownedCards: true } },
         // Never return pinHash!
       },
       orderBy: { createdAt: 'asc' },
@@ -52,7 +53,11 @@ export async function GET() {
 
     return NextResponse.json({
       players: players.map((p) => ({
-        ...p,
+        id: p.id,
+        nickname: p.nickname,
+        avatar: p.avatar,
+        coins: p.coins,
+        cardCount: p._count.ownedCards,
         createdAt: p.createdAt.toISOString(),
       })),
       maxPlayers: MAX_PLAYERS,

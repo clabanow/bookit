@@ -18,6 +18,7 @@ interface CardSeed {
   rarity: CardRarity
   coinCost: number
   season: string | null
+  imageUrl: string | null
 }
 
 const cards: CardSeed[] = [
@@ -30,6 +31,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.COMMON,
     coinCost: 50,
     season: null,
+    imageUrl: 'emoji:🐱',
   },
   {
     name: 'Puppy',
@@ -37,6 +39,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.COMMON,
     coinCost: 50,
     season: null,
+    imageUrl: 'emoji:🐶',
   },
   {
     name: 'Dog',
@@ -44,6 +47,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.COMMON,
     coinCost: 50,
     season: null,
+    imageUrl: 'emoji:🐕',
   },
   {
     name: 'Chicken',
@@ -51,6 +55,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.COMMON,
     coinCost: 50,
     season: null,
+    imageUrl: 'emoji:🐔',
   },
   {
     name: 'Chick',
@@ -58,6 +63,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.COMMON,
     coinCost: 50,
     season: null,
+    imageUrl: 'emoji:🐥',
   },
   {
     name: 'Cow',
@@ -65,6 +71,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.COMMON,
     coinCost: 50,
     season: null,
+    imageUrl: 'emoji:🐮',
   },
 
   // ============================================
@@ -76,6 +83,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.RARE,
     coinCost: 200,
     season: 'OCT',
+    imageUrl: 'emoji:🎃',
   },
   {
     name: 'Autumn Cat',
@@ -83,6 +91,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.RARE,
     coinCost: 200,
     season: 'OCT',
+    imageUrl: 'emoji:🍂',
   },
   {
     name: 'Crow',
@@ -90,6 +99,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.RARE,
     coinCost: 200,
     season: 'OCT',
+    imageUrl: 'emoji:🐦‍⬛',
   },
   {
     name: 'Zombie',
@@ -97,6 +107,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.RARE,
     coinCost: 200,
     season: 'OCT',
+    imageUrl: 'emoji:🧟',
   },
   {
     name: 'Santa Sleigh',
@@ -104,6 +115,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.RARE,
     coinCost: 200,
     season: 'DEC',
+    imageUrl: 'emoji:🛷',
   },
 
   // ============================================
@@ -115,6 +127,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.LEGENDARY,
     coinCost: 500,
     season: null,
+    imageUrl: 'emoji:👑',
   },
   {
     name: 'Turkey',
@@ -122,6 +135,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.LEGENDARY,
     coinCost: 500,
     season: 'NOV',
+    imageUrl: 'emoji:🦃',
   },
   {
     name: 'Megalodon',
@@ -129,6 +143,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.LEGENDARY,
     coinCost: 500,
     season: null,
+    imageUrl: 'emoji:🦈',
   },
   {
     name: 'Baby Shark',
@@ -136,6 +151,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.LEGENDARY,
     coinCost: 500,
     season: null,
+    imageUrl: 'emoji:🐟',
   },
   {
     name: 'Santa',
@@ -143,6 +159,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.LEGENDARY,
     coinCost: 500,
     season: 'DEC',
+    imageUrl: 'emoji:🎅',
   },
   {
     name: 'Ghost',
@@ -150,6 +167,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.LEGENDARY,
     coinCost: 500,
     season: 'OCT',
+    imageUrl: 'emoji:👻',
   },
   {
     name: 'King of Hearts',
@@ -157,6 +175,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.LEGENDARY,
     coinCost: 500,
     season: null,
+    imageUrl: 'emoji:♥️',
   },
 
   // ============================================
@@ -168,6 +187,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.MYSTICAL,
     coinCost: 1500,
     season: 'OCT',
+    imageUrl: 'emoji:😱',
   },
   {
     name: 'Hamsta Claus',
@@ -175,6 +195,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.MYSTICAL,
     coinCost: 1500,
     season: 'DEC',
+    imageUrl: 'emoji:🐹',
   },
   {
     name: 'Phantom King',
@@ -182,6 +203,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.MYSTICAL,
     coinCost: 1500,
     season: 'OCT',
+    imageUrl: 'emoji:🫅',
   },
   {
     name: 'Tim the Alien',
@@ -189,6 +211,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.MYSTICAL,
     coinCost: 1500,
     season: null,
+    imageUrl: 'emoji:👽',
   },
   {
     name: 'Rainbow Astronaut',
@@ -196,6 +219,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.MYSTICAL,
     coinCost: 1500,
     season: null,
+    imageUrl: 'emoji:🧑‍🚀',
   },
   {
     name: 'Pele',
@@ -203,6 +227,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.MYSTICAL,
     coinCost: 1500,
     season: null,
+    imageUrl: 'emoji:⚽',
   },
 
   // ============================================
@@ -215,6 +240,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.IRIDESCENT,
     coinCost: 5000,
     season: null,
+    imageUrl: 'emoji:⭐',
   },
   {
     name: 'Mack',
@@ -222,6 +248,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.IRIDESCENT,
     coinCost: 5000,
     season: null,
+    imageUrl: 'emoji:🧠',
   },
   {
     name: 'Lucy',
@@ -229,6 +256,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.IRIDESCENT,
     coinCost: 5000,
     season: null,
+    imageUrl: 'emoji:🌟',
   },
   {
     name: 'Pippa',
@@ -236,6 +264,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.IRIDESCENT,
     coinCost: 5000,
     season: null,
+    imageUrl: 'emoji:🐾',
   },
 ]
 
@@ -250,6 +279,7 @@ async function seedCards() {
         rarity: card.rarity,
         coinCost: card.coinCost,
         season: card.season,
+        imageUrl: card.imageUrl,
       },
       create: {
         name: card.name,
@@ -257,6 +287,7 @@ async function seedCards() {
         rarity: card.rarity,
         coinCost: card.coinCost,
         season: card.season,
+        imageUrl: card.imageUrl,
       },
     })
     console.log(`  ✓ ${card.rarity} — ${card.name} (${card.coinCost} coins)`)

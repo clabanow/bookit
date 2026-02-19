@@ -17,9 +17,18 @@ interface CollectionCard {
   description: string
   rarity: 'COMMON' | 'RARE' | 'LEGENDARY' | 'MYSTICAL' | 'IRIDESCENT'
   coinCost: number
+  imageUrl: string | null
   season: string | null
   owned: boolean
   obtainedAt: string | null
+}
+
+/** Extract emoji from imageUrl format "emoji:🐱" */
+function getCardEmoji(imageUrl: string | null): string {
+  if (imageUrl && imageUrl.startsWith('emoji:')) {
+    return imageUrl.slice(6)
+  }
+  return '?'
 }
 
 interface CollectionStats {
@@ -229,9 +238,9 @@ export default function CollectionPage() {
                     : 'bg-slate-800/50 border-slate-700 opacity-40 grayscale'
                 }`}
               >
-                {/* Card art placeholder */}
-                <div className="w-full aspect-square rounded-md bg-slate-700/50 mb-1.5 flex items-center justify-center text-2xl">
-                  {card.owned ? '✓' : '?'}
+                {/* Card art */}
+                <div className="w-full aspect-square rounded-md bg-slate-700/50 mb-1.5 flex items-center justify-center text-3xl">
+                  {card.owned ? getCardEmoji(card.imageUrl) : '?'}
                 </div>
                 <p className="text-white text-xs font-medium truncate">{card.name}</p>
                 <p className={`text-xs ${config.color}`}>{config.label}</p>
@@ -254,9 +263,9 @@ export default function CollectionPage() {
               }`}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Card art placeholder */}
-              <div className="w-full aspect-square rounded-lg bg-slate-700/50 mb-4 flex items-center justify-center text-6xl">
-                {selectedCard.owned ? '✓' : '?'}
+              {/* Card art */}
+              <div className="w-full aspect-square rounded-lg bg-slate-700/50 mb-4 flex items-center justify-center text-7xl">
+                {selectedCard.owned ? getCardEmoji(selectedCard.imageUrl) : '?'}
               </div>
 
               <h3 className="text-white text-xl font-bold">{selectedCard.name}</h3>
