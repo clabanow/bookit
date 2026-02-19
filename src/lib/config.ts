@@ -50,6 +50,9 @@ export interface AppConfig {
 
   // Rate limiting (can be tuned per environment)
   rateLimitEnabled: boolean
+
+  // AI usage limits (0 = unlimited, for testing)
+  dailyAiGenerationLimit: number
 }
 
 /**
@@ -103,6 +106,9 @@ function parseConfig(): AppConfig {
 
     // Rate limiting - enabled everywhere except tests
     rateLimitEnabled: process.env.RATE_LIMIT_ENABLED !== 'false' && !isTest,
+
+    // AI usage limits - default 3 per day; set to 0 to disable (for testing)
+    dailyAiGenerationLimit: parseInt(process.env.DAILY_AI_GENERATION_LIMIT || '3', 10),
   }
 }
 

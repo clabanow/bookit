@@ -10,6 +10,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 
 interface ShopCard {
@@ -23,7 +24,12 @@ interface ShopCard {
   owned: boolean
 }
 
-/** Extract emoji from imageUrl format "emoji:🐱" */
+/** Check if imageUrl is a real image path (not an emoji) */
+function isImagePath(imageUrl: string | null): boolean {
+  return !!imageUrl && imageUrl.startsWith('/')
+}
+
+/** Extract emoji from legacy "emoji:🐱" format */
 function getCardEmoji(imageUrl: string | null): string {
   if (imageUrl && imageUrl.startsWith('emoji:')) {
     return imageUrl.slice(6)
@@ -230,9 +236,19 @@ export default function ShopPage() {
                       }`}
                     >
                       {/* Card art */}
-                      <div className="w-full aspect-square rounded-md bg-slate-700/50 mb-2 flex items-center justify-center text-5xl">
+                      <div className="w-full aspect-square rounded-md bg-slate-700/50 mb-2 flex items-center justify-center overflow-hidden">
                         {card.owned ? (
-                          getCardEmoji(card.imageUrl)
+                          isImagePath(card.imageUrl) ? (
+                            <Image
+                              src={card.imageUrl!}
+                              alt={card.name}
+                              width={256}
+                              height={256}
+                              className="w-full h-full object-cover rounded-md"
+                            />
+                          ) : (
+                            <span className="text-5xl">{getCardEmoji(card.imageUrl)}</span>
+                          )
                         ) : (
                           <span className="opacity-30 text-3xl">?</span>
                         )}

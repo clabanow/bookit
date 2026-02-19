@@ -31,7 +31,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.COMMON,
     coinCost: 50,
     season: null,
-    imageUrl: 'emoji:🐱',
+    imageUrl: '/cards/cat.jpg',
   },
   {
     name: 'Puppy',
@@ -39,7 +39,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.COMMON,
     coinCost: 50,
     season: null,
-    imageUrl: 'emoji:🐶',
+    imageUrl: '/cards/puppy.jpg',
   },
   {
     name: 'Dog',
@@ -47,7 +47,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.COMMON,
     coinCost: 50,
     season: null,
-    imageUrl: 'emoji:🐕',
+    imageUrl: '/cards/dog.jpg',
   },
   {
     name: 'Chicken',
@@ -55,7 +55,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.COMMON,
     coinCost: 50,
     season: null,
-    imageUrl: 'emoji:🐔',
+    imageUrl: '/cards/chicken.jpg',
   },
   {
     name: 'Chick',
@@ -63,7 +63,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.COMMON,
     coinCost: 50,
     season: null,
-    imageUrl: 'emoji:🐥',
+    imageUrl: '/cards/chick.jpg',
   },
   {
     name: 'Cow',
@@ -71,7 +71,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.COMMON,
     coinCost: 50,
     season: null,
-    imageUrl: 'emoji:🐮',
+    imageUrl: '/cards/cow.jpg',
   },
 
   // ============================================
@@ -83,7 +83,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.RARE,
     coinCost: 200,
     season: 'OCT',
-    imageUrl: 'emoji:🎃',
+    imageUrl: '/cards/pumpkin-puppy.jpg',
   },
   {
     name: 'Autumn Cat',
@@ -91,7 +91,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.RARE,
     coinCost: 200,
     season: 'OCT',
-    imageUrl: 'emoji:🍂',
+    imageUrl: '/cards/autumn-cat.jpg',
   },
   {
     name: 'Crow',
@@ -99,7 +99,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.RARE,
     coinCost: 200,
     season: 'OCT',
-    imageUrl: 'emoji:🐦‍⬛',
+    imageUrl: '/cards/crow.jpg',
   },
   {
     name: 'Zombie',
@@ -107,7 +107,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.RARE,
     coinCost: 200,
     season: 'OCT',
-    imageUrl: 'emoji:🧟',
+    imageUrl: '/cards/zombie.jpg',
   },
   {
     name: 'Santa Sleigh',
@@ -115,7 +115,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.RARE,
     coinCost: 200,
     season: 'DEC',
-    imageUrl: 'emoji:🛷',
+    imageUrl: '/cards/santa-sleigh.jpg',
   },
 
   // ============================================
@@ -127,7 +127,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.LEGENDARY,
     coinCost: 500,
     season: null,
-    imageUrl: 'emoji:👑',
+    imageUrl: '/cards/king.jpg',
   },
   {
     name: 'Turkey',
@@ -135,7 +135,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.LEGENDARY,
     coinCost: 500,
     season: 'NOV',
-    imageUrl: 'emoji:🦃',
+    imageUrl: '/cards/turkey.jpg',
   },
   {
     name: 'Megalodon',
@@ -143,7 +143,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.LEGENDARY,
     coinCost: 500,
     season: null,
-    imageUrl: 'emoji:🦈',
+    imageUrl: '/cards/megalodon.jpg',
   },
   {
     name: 'Baby Shark',
@@ -151,7 +151,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.LEGENDARY,
     coinCost: 500,
     season: null,
-    imageUrl: 'emoji:🐟',
+    imageUrl: '/cards/baby-shark.jpg',
   },
   {
     name: 'Santa',
@@ -159,7 +159,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.LEGENDARY,
     coinCost: 500,
     season: 'DEC',
-    imageUrl: 'emoji:🎅',
+    imageUrl: '/cards/santa.jpg',
   },
   {
     name: 'Ghost',
@@ -167,7 +167,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.LEGENDARY,
     coinCost: 500,
     season: 'OCT',
-    imageUrl: 'emoji:👻',
+    imageUrl: '/cards/ghost.jpg',
   },
   {
     name: 'King of Hearts',
@@ -175,7 +175,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.LEGENDARY,
     coinCost: 500,
     season: null,
-    imageUrl: 'emoji:♥️',
+    imageUrl: '/cards/king-of-hearts.jpg',
   },
 
   // ============================================
@@ -187,7 +187,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.MYSTICAL,
     coinCost: 1500,
     season: 'OCT',
-    imageUrl: 'emoji:😱',
+    imageUrl: '/cards/spooky-ghost.jpg',
   },
   {
     name: 'Hamsta Claus',
@@ -195,7 +195,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.MYSTICAL,
     coinCost: 1500,
     season: 'DEC',
-    imageUrl: 'emoji:🐹',
+    imageUrl: '/cards/hamsta-claus.jpg',
   },
   {
     name: 'Phantom King',
@@ -203,7 +203,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.MYSTICAL,
     coinCost: 1500,
     season: 'OCT',
-    imageUrl: 'emoji:🫅',
+    imageUrl: '/cards/phantom-king.jpg',
   },
   {
     name: 'Tim the Alien',
@@ -211,7 +211,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.MYSTICAL,
     coinCost: 1500,
     season: null,
-    imageUrl: 'emoji:👽',
+    imageUrl: '/cards/tim-the-alien.jpg',
   },
   {
     name: 'Rainbow Astronaut',
@@ -219,7 +219,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.MYSTICAL,
     coinCost: 1500,
     season: null,
-    imageUrl: 'emoji:🧑‍🚀',
+    imageUrl: '/cards/rainbow-astronaut.jpg',
   },
   {
     name: 'Pele',
@@ -227,7 +227,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.MYSTICAL,
     coinCost: 1500,
     season: null,
-    imageUrl: 'emoji:⚽',
+    imageUrl: '/cards/pele.jpg',
   },
 
   // ============================================
@@ -240,7 +240,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.IRIDESCENT,
     coinCost: 5000,
     season: null,
-    imageUrl: 'emoji:⭐',
+    imageUrl: '/cards/lex.jpg',
   },
   {
     name: 'Mack',
@@ -248,7 +248,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.IRIDESCENT,
     coinCost: 5000,
     season: null,
-    imageUrl: 'emoji:🧠',
+    imageUrl: '/cards/mack.jpg',
   },
   {
     name: 'Lucy',
@@ -256,7 +256,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.IRIDESCENT,
     coinCost: 5000,
     season: null,
-    imageUrl: 'emoji:🌟',
+    imageUrl: '/cards/lucy.jpg',
   },
   {
     name: 'Pippa',
@@ -264,7 +264,7 @@ const cards: CardSeed[] = [
     rarity: CardRarity.IRIDESCENT,
     coinCost: 5000,
     season: null,
-    imageUrl: 'emoji:🐾',
+    imageUrl: '/cards/pippa.jpg',
   },
 ]
 

@@ -15,6 +15,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -486,9 +487,11 @@ export function GameBrowser({ games }: { games: GameConfig[] }) {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 w-full">
               {starterCards.map((card) => {
-                const emoji = card.imageUrl?.startsWith('emoji:')
-                  ? card.imageUrl.slice(6)
-                  : '?'
+                const hasImage = card.imageUrl?.startsWith('/')
+                const emoji =
+                  card.imageUrl?.startsWith('emoji:')
+                    ? card.imageUrl.slice(6)
+                    : '?'
                 return (
                   <button
                     key={card.id}
@@ -500,7 +503,19 @@ export function GameBrowser({ games }: { games: GameConfig[] }) {
                         : 'border-gray-200 hover:border-blue-400 hover:shadow-md'
                     } ${claimingCard !== null && claimingCard !== card.id ? 'opacity-50' : ''}`}
                   >
-                    <div className="text-5xl mb-2">{emoji}</div>
+                    {hasImage ? (
+                      <div className="w-full aspect-square rounded-md overflow-hidden mb-2">
+                        <Image
+                          src={card.imageUrl!}
+                          alt={card.name}
+                          width={256}
+                          height={256}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="text-5xl mb-2">{emoji}</div>
+                    )}
                     <p className="font-medium text-gray-900 text-sm">{card.name}</p>
                     <p className="text-xs text-gray-500 mt-1">{card.description}</p>
                     {claimingCard === card.id && (

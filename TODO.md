@@ -590,39 +590,51 @@ This is the single source of truth for all development tasks. Work items are ord
 
 ---
 
-## M13 — Usage Limits (Cost Control)
+## M13 — AI Generation Usage Limits (Cost Control)
 
-### [ ] M13.1: Add daily gameplay limits
-- **Acceptance Criteria**: Max games per user per day (configurable)
-- **Files**: src/lib/limits/gameplay.ts
-- **Tests**: Unit tests for limit enforcement
-- **Manual Verification**: Hit limit, get blocked
+### [x] M13.1: Add AiGeneration tracking model
+- **Acceptance Criteria**: AiGeneration model tracks each AI call per user, indexed by userId+createdAt
+- **Files**: prisma/schema.prisma (AiGeneration model + User relation)
+- **Tests**: None (schema only)
+- **Manual Verification**: `npx prisma generate` succeeds
+- **Migration pending**: `npx prisma migrate dev --name add_ai_generation_tracking`
 
-### [ ] M13.2: Add AI generation limits
-- **Acceptance Criteria**: Max AI question generations per user per day
-- **Files**: src/lib/limits/aiGeneration.ts
-- **Tests**: Unit tests for limit enforcement
-- **Manual Verification**: Hit limit, get blocked
+### [x] M13.2: Add daily AI generation limit config
+- **Acceptance Criteria**: `dailyAiGenerationLimit` in AppConfig, default 3, env var override, 0 = disabled
+- **Files**: src/lib/config.ts
+- **Tests**: None (config)
 
-### [ ] M13.3: Build usage tracking
-- **Acceptance Criteria**: Count games played, AI calls made today
-- **Files**: prisma/schema.prisma (UsageLog model), src/lib/limits/tracker.ts
-- **Tests**: Unit tests for counting
-- **Manual Verification**: Play games, see count increment
+### [x] M13.3: Implement usage checking + recording
+- **Acceptance Criteria**: getAiUsage() counts today's generations, recordAiGeneration() creates records
+- **Files**: src/lib/limits/usage.ts
+- **Tests**: 8 unit tests (getUTCDayStart, getAiUsage under/at/over limit, limit disabled, recordAiGeneration)
+- **Manual Verification**: None (tested via unit tests)
 
-### [ ] M13.4: Show remaining uses in UI
-- **Acceptance Criteria**: Display remaining games/generations in UI
-- **Files**: src/components/usage/UsageBadge.tsx
+### [x] M13.4: Enforce limit in AI generate API
+- **Acceptance Criteria**: Returns 429 when daily limit reached, records after success, includes usage in response
+- **Files**: src/app/api/ai/generate/route.ts
+- **Tests**: Covered by M13.3 unit tests
+- **Manual Verification**: Generate 3 times, 4th returns 429
+
+### [x] M13.5: Usage info API endpoint
+- **Acceptance Criteria**: GET /api/usage returns current AI usage for authenticated user
+- **Files**: src/app/api/usage/route.ts
+- **Tests**: None (simple endpoint)
+- **Manual Verification**: Fetch /api/usage, see correct counts
+
+### [x] M13.6: Show remaining generations in UI
+- **Acceptance Criteria**: Generate page shows "X of Y remaining", disables button at 0
+- **Files**: src/app/games/quiz/host/sets/generate/page.tsx
 - **Tests**: None (UI)
-- **Manual Verification**: See remaining count decrease
+- **Manual Verification**: See counter decrease after each generation, button disabled at 0
 
 ---
 
 ## Current Status
 
-**Current Task**: M6.5 COMPLETE! Rebranded to "Mack & Lex Games" multi-game platform.
-**Next Up**: M13 (Usage Limits)
-**Note**: Run `npx prisma migrate dev --name add_chat_and_spin` when DB is available (covers M10 ChatMessage + M12 lastSpinDate). Also pending: `npx prisma migrate dev --name add_coins_cards_system` and `npx tsx prisma/seed-cards.ts` from M11.
+**Current Task**: M13 COMPLETE! AI generation daily limits for cost control.
+**Next Up**: TBD
+**Note**: Run `npx prisma migrate dev --name add_chat_and_spin` when DB is available (covers M10 ChatMessage + M12 lastSpinDate). Also pending: `npx prisma migrate dev --name add_coins_cards_system` and `npx tsx prisma/seed-cards.ts` from M11. Also pending: `npx prisma migrate dev --name add_ai_generation_tracking` from M13.
 
 **Production URL**: https://bookit-production-5539.up.railway.app
 
@@ -641,11 +653,9 @@ This is the single source of truth for all development tasks. Work items are ord
 - **M10**: Chat Forum (Global + In-Game) ✓
 - **M11**: Gold Coins & Trading Cards ✓
 - **M12**: Daily Spin Wheel ✓
+- **M13**: AI Generation Usage Limits ✓ (3/day default, server-authoritative)
 
 ### In Progress:
 - **M6**: Post-MVP features (partial — M6.5 multi-game platform, M6.9 mobile polish done)
 
-### Backlog:
-- **M13**: Usage Limits (Cost Control)
-
-**Tests**: 291 passing
+**Tests**: 299 passing

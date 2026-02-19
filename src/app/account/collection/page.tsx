@@ -9,6 +9,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 
 interface CollectionCard {
@@ -23,7 +24,12 @@ interface CollectionCard {
   obtainedAt: string | null
 }
 
-/** Extract emoji from imageUrl format "emoji:🐱" */
+/** Check if imageUrl is a real image path (not an emoji) */
+function isImagePath(imageUrl: string | null): boolean {
+  return !!imageUrl && imageUrl.startsWith('/')
+}
+
+/** Extract emoji from legacy "emoji:🐱" format */
 function getCardEmoji(imageUrl: string | null): string {
   if (imageUrl && imageUrl.startsWith('emoji:')) {
     return imageUrl.slice(6)
@@ -239,8 +245,22 @@ export default function CollectionPage() {
                 }`}
               >
                 {/* Card art */}
-                <div className="w-full aspect-square rounded-md bg-slate-700/50 mb-1.5 flex items-center justify-center text-3xl">
-                  {card.owned ? getCardEmoji(card.imageUrl) : '?'}
+                <div className="w-full aspect-square rounded-md bg-slate-700/50 mb-1.5 flex items-center justify-center overflow-hidden">
+                  {card.owned ? (
+                    isImagePath(card.imageUrl) ? (
+                      <Image
+                        src={card.imageUrl!}
+                        alt={card.name}
+                        width={128}
+                        height={128}
+                        className="w-full h-full object-cover rounded-md"
+                      />
+                    ) : (
+                      <span className="text-3xl">{getCardEmoji(card.imageUrl)}</span>
+                    )
+                  ) : (
+                    <span className="text-3xl">?</span>
+                  )}
                 </div>
                 <p className="text-white text-xs font-medium truncate">{card.name}</p>
                 <p className={`text-xs ${config.color}`}>{config.label}</p>
@@ -264,8 +284,22 @@ export default function CollectionPage() {
               onClick={(e) => e.stopPropagation()}
             >
               {/* Card art */}
-              <div className="w-full aspect-square rounded-lg bg-slate-700/50 mb-4 flex items-center justify-center text-7xl">
-                {selectedCard.owned ? getCardEmoji(selectedCard.imageUrl) : '?'}
+              <div className="w-full aspect-square rounded-lg bg-slate-700/50 mb-4 flex items-center justify-center overflow-hidden">
+                {selectedCard.owned ? (
+                  isImagePath(selectedCard.imageUrl) ? (
+                    <Image
+                      src={selectedCard.imageUrl!}
+                      alt={selectedCard.name}
+                      width={384}
+                      height={384}
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                  ) : (
+                    <span className="text-7xl">{getCardEmoji(selectedCard.imageUrl)}</span>
+                  )
+                ) : (
+                  <span className="text-7xl">?</span>
+                )}
               </div>
 
               <h3 className="text-white text-xl font-bold">{selectedCard.name}</h3>

@@ -15,6 +15,7 @@ import { getSession } from '@/lib/auth'
 import { isAIAvailable } from '@/lib/ai/client'
 import { extractContentFromImage, type ExtractedContent } from '@/lib/ai/vision'
 import { generateQuestions, generateQuestionsFromText, type GenerateOptions } from '@/lib/ai/questionGenerator'
+import { getAiUsage, recordAiGeneration } from '@/lib/limits/usage'
 
 export const dynamic = 'force-dynamic'
 
@@ -54,6 +55,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'AI features are not configured. Please add ANTHROPIC_API_KEY to your environment.' },
         { status: 503 }
+      )
+    }
+
+    // Check daily AI generation limit
+    const usage = await getAiUsage(session.userId)
+    if (!usage.allowed) {
+      return NextResponse.json(
+        { error: `Daily AI limit reached (${usage.limit}/day). Try again tomorrow.`, usage },
+        { status: 429 }
       )
     }
 
@@ -105,10 +115,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No content to generate from' }, { status: 400 })
     }
 
+    // Record this generation for usage tracking (only after success)
+    await recordAiGeneration(session.userId)
+
     return NextResponse.json({
       success: true,
       extractedContent: extractedContent || { contentType: body.contentType || 'general', items: [], rawText: body.text || '' },
       questions,
+      usage: await getAiUsage(session.userId),
     })
   } catch (error) {
     console.error('AI generation error:', error)
