@@ -14,7 +14,7 @@
  * 6. Save as a new question set
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -55,10 +55,25 @@ export default function GenerateQuestionsPage() {
   const [questionType, setQuestionType] = useState<'MULTIPLE_CHOICE' | 'SPELLING' | 'MIXED'>('MULTIPLE_CHOICE')
   const [contentType, setContentType] = useState<ContentType>('general')
 
+  // Usage tracking
+  const [aiUsage, setAiUsage] = useState<{ used: number; limit: number; remaining: number; allowed: boolean } | null>(null)
+
   // Generated state
   const [questions, setQuestions] = useState<GeneratedQuestion[]>([])
   const [setTitle, setSetTitle] = useState('')
   const [detectedContentType, setDetectedContentType] = useState<ContentType | null>(null)
+
+  // Fetch AI usage on mount
+  useEffect(() => {
+    fetch('/api/usage')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.ai) setAiUsage(data.ai)
+      })
+      .catch(() => {
+        // If usage fetch fails, don't block the page — just hide the counter
+      })
+  }, [])
 
   function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -128,6 +143,9 @@ export default function GenerateQuestionsPage() {
 
       setQuestions(data.questions)
 
+      // Update usage count from the response
+      if (data.usage) setAiUsage(data.usage)
+
       // Capture detected content type from the API response
       if (data.extractedContent?.contentType) {
         setDetectedContentType(data.extractedContent.contentType as ContentType)
@@ -178,6 +196,10 @@ export default function GenerateQuestionsPage() {
       }
 
       setQuestions(data.questions)
+
+      // Update usage count from the response
+      if (data.usage) setAiUsage(data.usage)
+
       setStep('review')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Re-generation failed')
@@ -237,12 +259,12 @@ export default function GenerateQuestionsPage() {
   // Input Step
   if (step === 'input') {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 p-4 md:p-8">
+      <div className="min-h-screen bg-gray-50 p-4 md:p-8">
         <div className="max-w-2xl mx-auto space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-white">AI Question Generator</h1>
-              <p className="text-slate-400">Upload homework or enter text to generate questions</p>
+              <h1 className="text-2xl font-bold text-gray-900">AI Question Generator</h1>
+              <p className="text-gray-500">Upload homework or enter text to generate questions</p>
             </div>
             <Button variant="outline" size="sm" onClick={() => router.push('/games/quiz/host/sets')}>
               Cancel
@@ -250,7 +272,7 @@ export default function GenerateQuestionsPage() {
           </div>
 
           {error && (
-            <div className="bg-red-500/10 text-red-400 border border-red-500/20 p-3 rounded-md">
+            <div className="bg-red-100 text-red-700 border border-red-200 p-3 rounded-md">
               {error}
             </div>
           )}
@@ -296,21 +318,21 @@ export default function GenerateQuestionsPage() {
                     htmlFor="image-upload"
                     className={`flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
                       imageData
-                        ? 'border-green-500 bg-green-500/10'
-                        : 'border-slate-600 hover:border-slate-500 bg-slate-800/50'
+                        ? 'border-green-500 bg-green-50'
+                        : 'border-gray-300 hover:border-blue-400 bg-gray-50'
                     }`}
                   >
                     {imageData ? (
                       <div className="text-center">
                         <span className="text-4xl">✓</span>
-                        <p className="text-green-400 mt-2">Image uploaded</p>
-                        <p className="text-xs text-slate-400">Click to change</p>
+                        <p className="text-green-600 mt-2">Image uploaded</p>
+                        <p className="text-xs text-gray-500">Click to change</p>
                       </div>
                     ) : (
                       <div className="text-center">
                         <span className="text-4xl">📷</span>
-                        <p className="text-slate-400 mt-2">Click to upload image</p>
-                        <p className="text-xs text-slate-500">or drag and drop</p>
+                        <p className="text-gray-500 mt-2">Click to upload image</p>
+                        <p className="text-xs text-gray-400">or drag and drop</p>
                       </div>
                     )}
                   </label>
@@ -321,7 +343,7 @@ export default function GenerateQuestionsPage() {
                     <Label htmlFor="text-content">Content</Label>
                     <textarea
                       id="text-content"
-                      className="w-full h-48 p-3 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
+                      className="w-full h-48 p-3 rounded-lg bg-white border border-gray-300 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
                       placeholder="Enter vocabulary words (one per line), facts, definitions, etc."
                       value={textInput}
                       onChange={(e) => setTextInput(e.target.value)}
@@ -335,7 +357,7 @@ export default function GenerateQuestionsPage() {
                       id="content-type"
                       value={contentType}
                       onChange={(e) => setContentType(e.target.value as ContentType)}
-                      className="w-full mt-1 px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white focus:border-blue-500 focus:outline-none"
+                      className="w-full mt-1 px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
                     >
                       {Object.entries(CONTENT_TYPE_LABELS).map(([value, label]) => (
                         <option key={value} value={value}>
@@ -343,7 +365,7 @@ export default function GenerateQuestionsPage() {
                         </option>
                       ))}
                     </select>
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-xs text-gray-500 mt-1">
                       Helps AI generate better questions for this content
                     </p>
                   </div>
@@ -368,11 +390,27 @@ export default function GenerateQuestionsPage() {
                 </div>
               </div>
 
+              {/* AI usage limit display */}
+              {aiUsage && aiUsage.limit > 0 && (
+                <div className={`text-sm text-center p-2 rounded-md ${
+                  aiUsage.remaining === 0
+                    ? 'bg-red-100 text-red-700 border border-red-200'
+                    : 'bg-blue-50 text-blue-700 border border-blue-100'
+                }`}>
+                  {aiUsage.remaining === 0
+                    ? `You've used all ${aiUsage.limit} AI generations for today. Come back tomorrow!`
+                    : `${aiUsage.remaining} of ${aiUsage.limit} generations remaining today`}
+                </div>
+              )}
+
               <Button
                 className="w-full"
                 size="lg"
                 onClick={handleGenerate}
-                disabled={inputMode === 'image' ? !imageData : !textInput.trim()}
+                disabled={
+                  (inputMode === 'image' ? !imageData : !textInput.trim()) ||
+                  (aiUsage !== null && aiUsage.limit > 0 && !aiUsage.allowed)
+                }
               >
                 Generate Questions with AI
               </Button>
@@ -386,12 +424,12 @@ export default function GenerateQuestionsPage() {
   // Generating Step
   if (step === 'generating') {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6 text-center">
             <div className="text-6xl mb-4 animate-bounce">🤖</div>
-            <h2 className="text-xl font-bold text-white mb-2">Generating Questions...</h2>
-            <p className="text-slate-400">AI is analyzing your content</p>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Generating Questions...</h2>
+            <p className="text-gray-500">AI is analyzing your content</p>
           </CardContent>
         </Card>
       </div>
@@ -401,12 +439,12 @@ export default function GenerateQuestionsPage() {
   // Review Step
   if (step === 'review') {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 p-4 md:p-8">
+      <div className="min-h-screen bg-gray-50 p-4 md:p-8">
         <div className="max-w-2xl mx-auto space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-white">Review Questions</h1>
-              <p className="text-slate-400">{questions.length} questions generated</p>
+              <h1 className="text-2xl font-bold text-gray-900">Review Questions</h1>
+              <p className="text-gray-500">{questions.length} questions generated</p>
             </div>
             <Button variant="outline" size="sm" onClick={() => setStep('input')}>
               Start Over
@@ -414,7 +452,7 @@ export default function GenerateQuestionsPage() {
           </div>
 
           {error && (
-            <div className="bg-red-500/10 text-red-400 border border-red-500/20 p-3 rounded-md">
+            <div className="bg-red-100 text-red-700 border border-red-200 p-3 rounded-md">
               {error}
             </div>
           )}
@@ -425,8 +463,8 @@ export default function GenerateQuestionsPage() {
               <CardContent className="pt-4">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-slate-400">Content Type:</span>
-                    <span className="text-xs px-2 py-1 rounded-full bg-blue-500/20 text-blue-400 font-medium">
+                    <span className="text-sm text-gray-500">Content Type:</span>
+                    <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 font-medium">
                       {CONTENT_TYPE_LABELS[detectedContentType]}
                     </span>
                   </div>
@@ -434,7 +472,7 @@ export default function GenerateQuestionsPage() {
                     <select
                       value={detectedContentType}
                       onChange={(e) => handleRegenerate(e.target.value as ContentType)}
-                      className="text-sm px-2 py-1 rounded bg-slate-800 border border-slate-700 text-white"
+                      className="text-sm px-2 py-1 rounded bg-white border border-gray-300 text-gray-900"
                     >
                       {Object.entries(CONTENT_TYPE_LABELS).map(([value, label]) => (
                         <option key={value} value={value}>
@@ -442,7 +480,7 @@ export default function GenerateQuestionsPage() {
                         </option>
                       ))}
                     </select>
-                    <span className="text-xs text-slate-500">Override &amp; re-generate</span>
+                    <span className="text-xs text-gray-500">Override &amp; re-generate</span>
                   </div>
                 </div>
               </CardContent>
@@ -469,20 +507,20 @@ export default function GenerateQuestionsPage() {
               <Card key={index}>
                 <CardContent className="pt-4">
                   <div className="flex justify-between items-start mb-2">
-                    <span className="text-xs px-2 py-1 rounded bg-slate-700 text-slate-300">
+                    <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">
                       {q.type === 'MULTIPLE_CHOICE' ? '4 Options' : 'Spelling'}
                     </span>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-red-400 hover:text-red-300"
+                      className="text-red-500 hover:text-red-700"
                       onClick={() => removeQuestion(index)}
                     >
                       Remove
                     </Button>
                   </div>
 
-                  <p className="text-white font-medium mb-2">
+                  <p className="text-gray-900 font-medium mb-2">
                     {index + 1}. {q.prompt}
                   </p>
 
@@ -493,8 +531,8 @@ export default function GenerateQuestionsPage() {
                           key={i}
                           className={`p-2 rounded text-sm ${
                             i === q.correctIndex
-                              ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                              : 'bg-slate-800 text-slate-400'
+                              ? 'bg-green-100 text-green-700 border border-green-200'
+                              : 'bg-gray-50 text-gray-600 border border-gray-200'
                           }`}
                         >
                           {opt}
@@ -504,12 +542,12 @@ export default function GenerateQuestionsPage() {
                   )}
 
                   {q.type === 'SPELLING' && (
-                    <div className="p-2 bg-slate-800 rounded">
-                      <p className="text-sm text-slate-400">
-                        Answer: <span className="text-green-400">{q.answer}</span>
+                    <div className="p-2 bg-gray-50 border border-gray-200 rounded">
+                      <p className="text-sm text-gray-600">
+                        Answer: <span className="text-green-600 font-medium">{q.answer}</span>
                       </p>
                       {q.hint && (
-                        <p className="text-xs text-slate-500 mt-1">Hint: {q.hint}</p>
+                        <p className="text-xs text-gray-500 mt-1">Hint: {q.hint}</p>
                       )}
                     </div>
                   )}
@@ -530,12 +568,12 @@ export default function GenerateQuestionsPage() {
 
   // Saving Step
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <Card className="w-full max-w-md">
         <CardContent className="pt-6 text-center">
           <div className="text-6xl mb-4">💾</div>
-          <h2 className="text-xl font-bold text-white mb-2">Saving...</h2>
-          <p className="text-slate-400">Creating your question set</p>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Saving...</h2>
+          <p className="text-gray-500">Creating your question set</p>
         </CardContent>
       </Card>
     </div>
