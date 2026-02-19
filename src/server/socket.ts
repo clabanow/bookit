@@ -106,7 +106,7 @@ function handleConnection(io: Server, socket: Socket): void {
 // Events that clients can send to the server
 export interface ClientToServerEvents {
   ping: () => void
-  'host:create_room': (data: { questionSetId: string }) => void
+  'host:create_room': (data: { questionSetId: string; gameType?: string }) => void
   'host:reconnect': (data: { sessionId: string }) => void
   'host:start_game': (data: { sessionId: string }) => void
   'host:advance_game': (data: { sessionId: string }) => void
@@ -119,6 +119,7 @@ export interface ClientToServerEvents {
     sessionId: string
     answerIndex: number
   }) => void
+  'player:submit_kick': (data: { sessionId: string; direction: string }) => void
   'player:reconnect': (data: { sessionId: string; playerId: string }) => void
   'chat:join_channel': (data: { channel: string }) => void
   'chat:leave_channel': (data: { channel: string }) => void
@@ -155,12 +156,14 @@ export interface ServerToClientEvents {
     }>
   }) => void
   'player:answer_confirmed': (data: { answerIndex: number; timestamp: number }) => void
+  'player:kick_confirmed': (data: { direction: string }) => void
   'host:disconnected': (data: { message: string; timestamp: number }) => void
   'host:connected': (data: { message: string; timestamp: number }) => void
   'player:kicked': (data: { playerId: string; reason: string }) => void
   'host:reconnected': (data: {
     sessionId: string
     roomCode: string
+    gameType: string
     phase: string
     currentQuestionIndex: number
     players: Array<{
@@ -216,6 +219,16 @@ export interface ServerToClientEvents {
       points: number
       totalScore: number
     }>
+  }) => void
+  'game:penalty_kick': (data: {
+    phase: string
+    questionIndex: number
+    results: Array<{
+      playerId: string
+      nickname: string
+      isCorrect: boolean
+    }>
+    timeoutMs: number
   }) => void
   'game:leaderboard': (data: {
     phase: string

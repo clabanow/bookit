@@ -39,6 +39,15 @@ const games: GameConfig[] = [
     enabled: true,
     accentColor: 'blue',
   },
+  {
+    id: 'soccer',
+    name: 'Soccer Stud',
+    description: 'Quiz meets penalty kicks! Answer right, then score to earn points.',
+    icon: '⚽',
+    basePath: '/games/soccer',
+    enabled: true,
+    accentColor: 'green',
+  },
 ]
 
 /** Look up a game by its ID */

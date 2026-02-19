@@ -5,7 +5,7 @@
  * A "room" is essentially a session that players can join via a code.
  */
 
-import { getSessionStore, type LiveSession } from '@/lib/session'
+import { getSessionStore, type LiveSession, type GameType } from '@/lib/session'
 import { prisma } from '@/lib/db'
 
 /**
@@ -51,7 +51,8 @@ export class RoomError extends Error {
  */
 export async function createRoom(
   hostSocketId: string,
-  questionSetId: string
+  questionSetId: string,
+  gameType: GameType = 'quiz'
 ): Promise<LiveSession> {
   // Validate questionSetId is provided
   if (!questionSetId || questionSetId.trim() === '') {
@@ -78,7 +79,7 @@ export async function createRoom(
   }
 
   const store = getSessionStore()
-  const session = await store.createSession(hostSocketId, questionSetId)
+  const session = await store.createSession(hostSocketId, questionSetId, gameType)
 
   console.log(`🎮 Room created: ${session.roomCode} (session: ${session.sessionId})`)
 

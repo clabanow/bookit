@@ -95,7 +95,7 @@ describe('RedisSessionStore', () => {
         connected: true,
         lastAnswerIndex: null,
         lastAnswerTime: null, lastSpellingAnswer: null,
-        coinsEarned: 0, streak: 0,
+        coinsEarned: 0, streak: 0, penaltyDirection: null, penaltyResult: null,
       })
 
       await store.deleteSession(session.sessionId)
@@ -122,7 +122,7 @@ describe('RedisSessionStore', () => {
       connected: true,
       lastAnswerIndex: null,
       lastAnswerTime: null, lastSpellingAnswer: null,
-      coinsEarned: 0, streak: 0,
+      coinsEarned: 0, streak: 0, penaltyDirection: null, penaltyResult: null,
     }
 
     it('adds a player to a session', async () => {

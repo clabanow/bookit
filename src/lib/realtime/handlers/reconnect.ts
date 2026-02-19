@@ -79,7 +79,7 @@ export async function handlePlayerReconnect(
 
     // 6. Get current question data if in a game phase
     let currentQuestion = null
-    if (session.phase === 'QUESTION' || session.phase === 'REVEAL') {
+    if (session.phase === 'QUESTION' || session.phase === 'PENALTY_KICK' || session.phase === 'REVEAL') {
       const questionSet = await prisma.questionSet.findUnique({
         where: { id: session.questionSetId },
         include: {

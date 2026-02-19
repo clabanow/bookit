@@ -657,5 +657,6 @@ This is the single source of truth for all development tasks. Work items are ord
 
 ### In Progress:
 - **M6**: Post-MVP features (partial — M6.5 multi-game platform, M6.9 mobile polish done)
+- **M14**: Soccer Stud Game ✓ (second game in registry — quiz + penalty kicks)
 
-**Tests**: 299 passing
+**Tests**: 313 passing

@@ -78,6 +78,7 @@ export async function handleHostReconnect(
   socket.emit('host:reconnected', {
     sessionId: session.sessionId,
     roomCode: session.roomCode,
+    gameType: session.gameType,
     phase: session.phase,
     currentQuestionIndex: session.currentQuestionIndex,
     players: playerList,
@@ -114,9 +115,9 @@ export function registerHostHandlers(io: Server, socket: Socket): void {
    * 2. Join the socket to a Socket.IO room (for broadcasting)
    * 3. Emit the room code back to the host
    */
-  socket.on('host:create_room', async (data: { questionSetId: string }) => {
+  socket.on('host:create_room', async (data: { questionSetId: string; gameType?: string }) => {
     try {
-      const { questionSetId } = data
+      const { questionSetId, gameType } = data
 
       // Rate limiting - prevent room creation spam
       const rateLimit = checkRateLimit(socket.id, 'createRoom')
@@ -129,8 +130,11 @@ export function registerHostHandlers(io: Server, socket: Socket): void {
         return
       }
 
+      // Validate gameType if provided (must be 'quiz' or 'soccer')
+      const validGameType = gameType === 'soccer' ? 'soccer' : 'quiz'
+
       // Create the room in our session store
-      const session = await createRoom(socket.id, questionSetId)
+      const session = await createRoom(socket.id, questionSetId, validGameType)
 
       // Join the Socket.IO room
       // Socket.IO rooms let us broadcast to all clients in a game

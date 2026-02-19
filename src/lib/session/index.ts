@@ -12,10 +12,10 @@
 import { MemorySessionStore } from './memory-store'
 import { RedisSessionStore } from './redis-store'
 import { config } from '../config'
-import type { SessionStore, LiveSession, Player, Phase } from './types'
+import type { SessionStore, LiveSession, Player, Phase, GameType } from './types'
 
 // Re-export types for convenience
-export type { SessionStore, LiveSession, Player, Phase }
+export type { SessionStore, LiveSession, Player, Phase, GameType }
 
 // Re-export Redis store for direct access if needed
 export { RedisSessionStore }
@@ -90,5 +90,7 @@ export function createPlayer(
     lastAnswerTime: null,
     coinsEarned: 0,
     streak: 0,
+    penaltyDirection: null,
+    penaltyResult: null,
   }
 }

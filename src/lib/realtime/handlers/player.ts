@@ -10,10 +10,12 @@
 
 import type { Server, Socket } from 'socket.io'
 import { getSessionStore, createPlayer } from '@/lib/session'
+import { prisma } from '@/lib/db'
 import { validateNickname, sanitizeNickname } from '@/lib/validation/nickname'
 import { validateRoomCode, validateAnswerIndex } from '@/lib/validation/schemas'
 import { checkRateLimit } from '@/lib/middleware/rateLimit'
 import { handlePlayerReconnect } from './reconnect'
+import { resolvePenalties } from './game'
 
 /**
  * Error codes for player operations.
@@ -356,6 +358,93 @@ export function registerPlayerHandlers(io: Server, socket: Socket): void {
         code: 'INTERNAL_ERROR',
         message: 'Failed to submit answer',
       })
+    }
+  })
+
+  /**
+   * Handle penalty kick submission (soccer mode).
+   *
+   * When a player in PENALTY_KICK phase chooses a direction:
+   * 1. Validate phase and player state
+   * 2. Record the kick direction
+   * 3. Check if all correct players have kicked → resolve early
+   */
+  socket.on('player:submit_kick', async (data: { sessionId: string; direction: string }) => {
+    try {
+      const { sessionId, direction } = data
+
+      // Validate direction
+      const validDirections = ['left', 'center', 'right']
+      if (!validDirections.includes(direction)) {
+        socket.emit('error', {
+          code: 'INVALID_INPUT',
+          message: 'Invalid kick direction',
+        })
+        return
+      }
+
+      const store = getSessionStore()
+      const session = await store.getSession(sessionId)
+      if (!session) {
+        socket.emit('error', { code: 'SESSION_NOT_FOUND', message: 'Game session not found' })
+        return
+      }
+
+      // Must be in PENALTY_KICK phase
+      if (session.phase !== 'PENALTY_KICK') {
+        socket.emit('error', { code: 'INVALID_PHASE', message: 'Cannot submit kick right now' })
+        return
+      }
+
+      // Find the player
+      const players = await store.getPlayers(sessionId)
+      const player = players.find((p) => p.socketId === socket.id)
+      if (!player) {
+        socket.emit('error', { code: 'PLAYER_NOT_FOUND', message: 'Player not found' })
+        return
+      }
+
+      // Check if already kicked
+      if (player.penaltyDirection !== null) {
+        socket.emit('error', { code: 'ALREADY_KICKED', message: 'You already submitted a kick' })
+        return
+      }
+
+      // Check if player got the quiz right (only correct players can kick)
+      if (player.penaltyResult === 'miss') {
+        socket.emit('error', { code: 'WRONG_ANSWER', message: 'Wrong answer — auto miss' })
+        return
+      }
+
+      // Record kick direction
+      await store.updatePlayer(sessionId, player.playerId, {
+        penaltyDirection: direction as 'left' | 'center' | 'right',
+      })
+
+      socket.emit('player:kick_confirmed', { direction })
+
+      console.log(`⚽ Player "${player.nickname}" kicked ${direction}`)
+
+      // Check if all correct players have now kicked → resolve early
+      const updatedPlayers = await store.getPlayers(sessionId)
+      const correctPlayersWaiting = updatedPlayers.filter(
+        (p) => p.penaltyResult !== 'miss' && p.penaltyDirection === null
+      )
+
+      if (correctPlayersWaiting.length === 0) {
+        // All correct players have kicked — fetch questions and resolve immediately
+        const questionSet = await prisma.questionSet.findUnique({
+          where: { id: session.questionSetId },
+          include: { questions: { orderBy: { order: 'asc' } } },
+        })
+
+        if (questionSet) {
+          await resolvePenalties(io, sessionId, session.currentQuestionIndex, questionSet.questions)
+        }
+      }
+    } catch (error) {
+      console.error('Error submitting kick:', error)
+      socket.emit('error', { code: 'INTERNAL_ERROR', message: 'Failed to submit kick' })
     }
   })
 

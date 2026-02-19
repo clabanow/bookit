@@ -33,6 +33,8 @@ export type GameEvent =
   | 'START_GAME' // Host starts the game
   | 'COUNTDOWN_COMPLETE' // 3-2-1 countdown finished
   | 'TIME_UP' // Question timer expired
+  | 'PENALTY_START' // Soccer: quiz phase ends, enter penalty kick phase
+  | 'PENALTY_COMPLETE' // Soccer: all kicks resolved, show results
   | 'SHOW_LEADERBOARD' // All answers in or reveal complete
   | 'NEXT_QUESTION' // Move to next question
   | 'GAME_OVER' // Last question completed

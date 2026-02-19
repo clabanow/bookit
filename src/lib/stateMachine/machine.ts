@@ -31,7 +31,11 @@ const transitions: Record<Phase, Partial<Record<GameEvent, Phase>>> = {
     COUNTDOWN_COMPLETE: 'QUESTION',
   },
   QUESTION: {
-    TIME_UP: 'REVEAL',
+    TIME_UP: 'REVEAL', // Quiz path: straight to reveal
+    PENALTY_START: 'PENALTY_KICK', // Soccer path: go to penalty kicks first
+  },
+  PENALTY_KICK: {
+    PENALTY_COMPLETE: 'REVEAL', // After kicks resolve, show results
   },
   REVEAL: {
     SHOW_LEADERBOARD: 'LEADERBOARD',
@@ -128,4 +132,12 @@ export function isGameActive(phase: Phase): boolean {
  */
 export function canSubmitAnswer(phase: Phase): boolean {
   return phase === 'QUESTION'
+}
+
+/**
+ * Check if players can submit a penalty kick direction.
+ * Only valid during the PENALTY_KICK phase (soccer mode).
+ */
+export function canSubmitKick(phase: Phase): boolean {
+  return phase === 'PENALTY_KICK'
 }

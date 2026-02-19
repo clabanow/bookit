@@ -123,3 +123,98 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* === Soccer Stud: Penalty Kick Animations === */
+
+/* Ball trajectories — ball flies toward goal */
+@keyframes kick-left {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-60px, -120px) scale(0.5); }
+}
+@keyframes kick-center {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(0, -140px) scale(0.4); }
+}
+@keyframes kick-right {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(60px, -120px) scale(0.5); }
+}
+
+/* Ball miss trajectories */
+@keyframes miss-sky-high {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(0, -250px) scale(0.3); opacity: 0; }
+}
+@keyframes miss-wide-left {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(-150px, -80px) scale(0.6); opacity: 0; }
+}
+@keyframes miss-wide-right {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(150px, -80px) scale(0.6); opacity: 0; }
+}
+@keyframes miss-hit-post {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-70px, -130px) scale(0.5); }
+  100% { transform: translate(-40px, -40px) scale(0.8); }
+}
+
+/* Goalie dives — 300ms delay for dramatic effect */
+@keyframes goalie-dive-left {
+  0%, 30% { transform: translateX(-50%) rotate(0); }
+  100% { transform: translateX(calc(-50% - 50px)) rotate(-15deg); }
+}
+@keyframes goalie-dive-center {
+  0%, 30% { transform: translateX(-50%) scaleX(1); }
+  100% { transform: translateX(-50%) scaleX(1.4); }
+}
+@keyframes goalie-dive-right {
+  0%, 30% { transform: translateX(-50%) rotate(0); }
+  100% { transform: translateX(calc(-50% + 50px)) rotate(15deg); }
+}
+
+/* Kicker animations */
+@keyframes kicker-run-kick {
+  0% { transform: translateX(-50%) translateY(0); }
+  60% { transform: translateX(-50%) translateY(-15px); }
+  100% { transform: translateX(-50%) translateY(-5px); }
+}
+@keyframes kicker-celebrate {
+  0% { transform: translateX(-50%) translateY(-5px); }
+  50% { transform: translateX(-50%) translateY(-25px) scale(1.2); }
+  100% { transform: translateX(-50%) translateY(-5px) scale(1); }
+}
+@keyframes kicker-collapse {
+  0% { transform: translateX(-50%) translateY(-5px); }
+  100% { transform: translateX(-50%) translateY(5px) rotate(90deg) scale(0.8); }
+}
+
+/* Net bulge when goal scored */
+@keyframes net-bulge {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Fade-in for result text */
+@keyframes fade-in {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Utility classes for animations */
+.animate-kick-left { animation: kick-left 0.8s ease-out forwards; }
+.animate-kick-center { animation: kick-center 0.8s ease-out forwards; }
+.animate-kick-right { animation: kick-right 0.8s ease-out forwards; }
+.animate-miss-sky-high { animation: miss-sky-high 0.8s ease-out forwards; }
+.animate-miss-wide-left { animation: miss-wide-left 0.8s ease-out forwards; }
+.animate-miss-wide-right { animation: miss-wide-right 0.8s ease-out forwards; }
+.animate-miss-hit-post { animation: miss-hit-post 0.8s ease-in-out forwards; }
+.animate-goalie-dive-left { animation: goalie-dive-left 0.8s ease-out forwards; }
+.animate-goalie-dive-center { animation: goalie-dive-center 0.8s ease-out forwards; }
+.animate-goalie-dive-right { animation: goalie-dive-right 0.8s ease-out forwards; }
+.animate-kicker-run-kick { animation: kicker-run-kick 0.6s ease-out forwards; }
+.animate-kicker-celebrate { animation: kicker-celebrate 1s ease-in-out forwards; }
+.animate-kicker-collapse { animation: kicker-collapse 0.6s ease-out forwards; }
+.animate-net-bulge { animation: net-bulge 0.5s ease-in-out; }
+.animate-fade-in { animation: fade-in 0.4s ease-out forwards; }

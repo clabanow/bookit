@@ -12,15 +12,25 @@
  */
 
 /**
+ * Game type — which game mode is being played.
+ * 'quiz' is the classic Bookit Quiz; 'soccer' adds penalty kicks after each question.
+ */
+export type GameType = 'quiz' | 'soccer'
+
+/**
  * Game phases - the states a game can be in.
  *
- * The game progresses through these phases in order:
+ * Quiz flow:
  * LOBBY → COUNTDOWN → QUESTION → REVEAL → LEADERBOARD → (repeat) → END
+ *
+ * Soccer flow (adds PENALTY_KICK between QUESTION and REVEAL):
+ * LOBBY → COUNTDOWN → QUESTION → PENALTY_KICK → REVEAL → LEADERBOARD → (repeat) → END
  */
 export type Phase =
   | 'LOBBY' // Waiting for players to join
   | 'COUNTDOWN' // 3-2-1 before first question
   | 'QUESTION' // Players are answering
+  | 'PENALTY_KICK' // Soccer: players choose where to kick (after answering quiz)
   | 'REVEAL' // Showing the correct answer
   | 'LEADERBOARD' // Showing current standings
   | 'END' // Game is over
@@ -43,6 +53,9 @@ export interface LiveSession {
 
   /** ID of the question set being used (references Postgres) */
   questionSetId: string
+
+  /** Which game mode: 'quiz' (classic) or 'soccer' (penalty kicks) */
+  gameType: GameType
 
   /** Current game phase */
   phase: Phase
@@ -99,6 +112,12 @@ export interface Player {
 
   /** Current streak of consecutive correct answers (resets on wrong answer) */
   streak: number
+
+  /** Soccer mode: which direction the player chose to kick (null if not kicked yet) */
+  penaltyDirection: 'left' | 'center' | 'right' | null
+
+  /** Soccer mode: result of the penalty kick (null if not resolved yet) */
+  penaltyResult: 'goal' | 'save' | 'miss' | null
 }
 
 /**
@@ -117,8 +136,9 @@ export interface SessionStore {
   /**
    * Create a new game session.
    * Generates a unique sessionId and roomCode automatically.
+   * @param gameType - 'quiz' (default) or 'soccer'
    */
-  createSession(hostSocketId: string, questionSetId: string): Promise<LiveSession>
+  createSession(hostSocketId: string, questionSetId: string, gameType?: GameType): Promise<LiveSession>
 
   /**
    * Get a session by its ID.

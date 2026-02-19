@@ -11,6 +11,7 @@ import {
   getValidEvents,
   isGameActive,
   canSubmitAnswer,
+  canSubmitKick,
 } from '../machine'
 import type { Phase } from '@/lib/session/types'
 import type { GameEvent } from '../types'
@@ -79,6 +80,8 @@ describe('State Machine', () => {
         'START_GAME',
         'COUNTDOWN_COMPLETE',
         'TIME_UP',
+        'PENALTY_START',
+        'PENALTY_COMPLETE',
         'SHOW_LEADERBOARD',
         'NEXT_QUESTION',
         'GAME_OVER',
@@ -168,7 +171,7 @@ describe('State Machine', () => {
     })
 
     it('returns true for gameplay phases', () => {
-      const activePhases: Phase[] = ['COUNTDOWN', 'QUESTION', 'REVEAL', 'LEADERBOARD']
+      const activePhases: Phase[] = ['COUNTDOWN', 'QUESTION', 'PENALTY_KICK', 'REVEAL', 'LEADERBOARD']
       for (const phase of activePhases) {
         expect(isGameActive(phase)).toBe(true)
       }
@@ -181,9 +184,46 @@ describe('State Machine', () => {
     })
 
     it('returns false for all other phases', () => {
-      const otherPhases: Phase[] = ['LOBBY', 'COUNTDOWN', 'REVEAL', 'LEADERBOARD', 'END']
+      const otherPhases: Phase[] = ['LOBBY', 'COUNTDOWN', 'PENALTY_KICK', 'REVEAL', 'LEADERBOARD', 'END']
       for (const phase of otherPhases) {
         expect(canSubmitAnswer(phase)).toBe(false)
+      }
+    })
+  })
+
+  describe('Soccer (Penalty Kick) Transitions', () => {
+    it('QUESTION → PENALTY_KICK on PENALTY_START', () => {
+      const result = transition('QUESTION', 'PENALTY_START')
+      expect(result.success).toBe(true)
+      expect(result.phase).toBe('PENALTY_KICK')
+    })
+
+    it('PENALTY_KICK → REVEAL on PENALTY_COMPLETE', () => {
+      const result = transition('PENALTY_KICK', 'PENALTY_COMPLETE')
+      expect(result.success).toBe(true)
+      expect(result.phase).toBe('REVEAL')
+    })
+
+    it('rejects PENALTY_START from non-QUESTION phase', () => {
+      const result = transition('LOBBY', 'PENALTY_START')
+      expect(result.success).toBe(false)
+    })
+
+    it('rejects PENALTY_COMPLETE from non-PENALTY_KICK phase', () => {
+      const result = transition('QUESTION', 'PENALTY_COMPLETE')
+      expect(result.success).toBe(false)
+    })
+  })
+
+  describe('canSubmitKick helper', () => {
+    it('returns true only for PENALTY_KICK phase', () => {
+      expect(canSubmitKick('PENALTY_KICK')).toBe(true)
+    })
+
+    it('returns false for all other phases', () => {
+      const otherPhases: Phase[] = ['LOBBY', 'COUNTDOWN', 'QUESTION', 'REVEAL', 'LEADERBOARD', 'END']
+      for (const phase of otherPhases) {
+        expect(canSubmitKick(phase)).toBe(false)
       }
     })
   })
@@ -235,6 +275,59 @@ describe('State Machine', () => {
             totalQuestions,
           })
           expect(result.success).toBe(true)
+          phase = result.phase
+          expect(phase).toBe('END')
+        }
+      }
+
+      expect(phase).toBe('END')
+    })
+
+    it('can complete a full soccer game with penalty kicks', () => {
+      let phase: Phase = 'LOBBY'
+      const totalQuestions = 2
+
+      // Start game
+      let result = transition(phase, 'START_GAME')
+      expect(result.success).toBe(true)
+      phase = result.phase
+
+      for (let q = 0; q < totalQuestions; q++) {
+        // Countdown → Question
+        result = transition(phase, 'COUNTDOWN_COMPLETE')
+        expect(result.success).toBe(true)
+        phase = result.phase
+        expect(phase).toBe('QUESTION')
+
+        // Question → Penalty Kick (soccer path)
+        result = transition(phase, 'PENALTY_START')
+        expect(result.success).toBe(true)
+        phase = result.phase
+        expect(phase).toBe('PENALTY_KICK')
+
+        // Penalty Kick → Reveal
+        result = transition(phase, 'PENALTY_COMPLETE')
+        expect(result.success).toBe(true)
+        phase = result.phase
+        expect(phase).toBe('REVEAL')
+
+        // Reveal → Leaderboard
+        result = transition(phase, 'SHOW_LEADERBOARD')
+        expect(result.success).toBe(true)
+        phase = result.phase
+        expect(phase).toBe('LEADERBOARD')
+
+        if (q < totalQuestions - 1) {
+          result = transition(phase, 'NEXT_QUESTION', {
+            currentQuestionIndex: q,
+            totalQuestions,
+          })
+          phase = result.phase
+        } else {
+          result = transition(phase, 'GAME_OVER', {
+            currentQuestionIndex: q,
+            totalQuestions,
+          })
           phase = result.phase
           expect(phase).toBe('END')
         }

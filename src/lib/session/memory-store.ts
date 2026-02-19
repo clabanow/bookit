@@ -11,7 +11,7 @@
  * That's fine for dev, but production uses Redis.
  */
 
-import type { SessionStore, LiveSession, Player, Phase } from './types'
+import type { SessionStore, LiveSession, Player, Phase, GameType } from './types'
 
 /**
  * Generate a random UUID.
@@ -60,7 +60,7 @@ export class MemorySessionStore implements SessionStore {
 
   // === Session Operations ===
 
-  async createSession(hostSocketId: string, questionSetId: string): Promise<LiveSession> {
+  async createSession(hostSocketId: string, questionSetId: string, gameType: GameType = 'quiz'): Promise<LiveSession> {
     const sessionId = generateId()
 
     // Generate a unique room code (retry if collision)
@@ -74,6 +74,7 @@ export class MemorySessionStore implements SessionStore {
       roomCode,
       hostSocketId,
       questionSetId,
+      gameType,
       phase: 'LOBBY' as Phase,
       currentQuestionIndex: 0,
       questionStartedAt: null,

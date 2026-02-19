@@ -18,7 +18,7 @@
  */
 
 import Redis from 'ioredis'
-import type { SessionStore, LiveSession, Player, Phase } from './types'
+import type { SessionStore, LiveSession, Player, Phase, GameType } from './types'
 import { config } from '../config'
 
 // Key prefixes - makes it easy to find/debug keys in Redis
@@ -88,7 +88,7 @@ export class RedisSessionStore implements SessionStore {
 
   // === Session Operations ===
 
-  async createSession(hostSocketId: string, questionSetId: string): Promise<LiveSession> {
+  async createSession(hostSocketId: string, questionSetId: string, gameType: GameType = 'quiz'): Promise<LiveSession> {
     const sessionId = generateId()
 
     // Generate unique room code (retry if collision)
@@ -113,6 +113,7 @@ export class RedisSessionStore implements SessionStore {
       roomCode,
       hostSocketId,
       questionSetId,
+      gameType,
       phase: 'LOBBY' as Phase,
       currentQuestionIndex: 0,
       questionStartedAt: null,
