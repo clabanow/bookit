@@ -83,7 +83,15 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-900 to-slate-800 p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-slate-900 to-slate-800 p-4">
+      <div className="w-full max-w-md mb-4">
+        <Link
+          href="/"
+          className="text-sm text-slate-400 hover:text-blue-400 hover:underline"
+        >
+          &larr; Back to Main Menu
+        </Link>
+      </div>
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>

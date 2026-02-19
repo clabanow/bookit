@@ -18,6 +18,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { PlayerSelector } from '@/components/player'
 import { getSocket, disconnectSocket } from '@/lib/realtime/client'
@@ -183,6 +184,12 @@ export default function JoinPage() {
   // Room code entry screen (default)
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4 md:p-8">
+      <Link
+        href="/"
+        className="mb-4 self-center text-sm text-gray-500 hover:text-blue-600 hover:underline"
+      >
+        &larr; Back to Main Menu
+      </Link>
       <h1 className="mb-6 md:mb-8 text-3xl md:text-4xl font-bold text-blue-600">Join a Game</h1>
 
       {state === 'error' && (

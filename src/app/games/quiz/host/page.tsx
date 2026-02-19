@@ -188,6 +188,12 @@ export default function HostPage() {
   // Render the initial setup screen
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4 md:p-8">
+      <Link
+        href="/"
+        className="mb-4 self-center text-sm text-gray-500 hover:text-blue-600 hover:underline"
+      >
+        &larr; Back to Main Menu
+      </Link>
       <h1 className="mb-6 md:mb-8 text-3xl md:text-4xl font-bold text-blue-600">Host a Game</h1>
 
       {state === 'error' && (

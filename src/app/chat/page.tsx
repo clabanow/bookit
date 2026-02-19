@@ -10,6 +10,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ChatPanel } from '@/components/chat/ChatPanel'
 
@@ -94,6 +95,12 @@ export default function ChatPage() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 p-4 md:p-8">
         <div className="max-w-md mx-auto">
+          <Link
+            href="/"
+            className="mb-4 inline-block text-sm text-slate-400 hover:text-blue-400 hover:underline"
+          >
+            &larr; Back to Main Menu
+          </Link>
           <h1 className="text-2xl font-bold text-white mb-2">Chat</h1>
           <p className="text-slate-400 mb-6">Choose who you want to chat as:</p>
           <div className="space-y-3">

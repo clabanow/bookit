@@ -39,7 +39,7 @@ export default function Home() {
               <div className="text-4xl mb-3">{game.icon}</div>
               <h2 className="text-xl font-bold text-gray-900 mb-2">{game.name}</h2>
               <p className="text-sm text-gray-500 mb-4">{game.description}</p>
-              <div className="flex gap-3">
+              <div className="flex justify-center gap-3">
                 <Link href={`${game.basePath}/host`}>
                   <Button size="sm">Host</Button>
                 </Link>
